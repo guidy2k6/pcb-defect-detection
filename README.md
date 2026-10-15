@@ -8,7 +8,7 @@
 # PCB-Defect-Detection
 A computer vision project detecting defects in printed circuit boards (PCBs) using basic vision techniques and yolo8n
 
-## Acknowledgements
+## Note
 
 This project is inspired by and builds upon the research presented in the following paper:
 [https://huggingface.co/papers/1901.08204](https://huggingface.co/papers/1901.08204)
