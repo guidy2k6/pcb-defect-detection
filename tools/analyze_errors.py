@@ -72,7 +72,7 @@ def main():
     names, images = load_split(a.data, a.split)
     n = len(names)
     model = YOLO(a.weights)
-    rec = {"gt": [], "extra": []}
+    rec = {"gt": [], "extra": [], "extra_kind": [], "extra_conf": [], "extra_info": []}
     for r in model.predict(source=[str(p) for p in images], stream=True, verbose=False,
                            imgsz=a.imgsz, conf=a.conf, device=a.device, batch=1):
         h, w = r.orig_shape
@@ -94,6 +94,13 @@ def main():
         for gi in missed:
             rec["gt"].append({"cls": int(g_cls[gi]), "area": float(area[gi]), "status": "missed", "pred_cls": -1})
         rec["extra"] += [int(p_cls[pi]) for pi in extra]
+        iou_pg = iou_matrix(p_xyxy, g_xyxy)
+        for pi in extra:
+            mx = float(iou_pg[pi].max()) if iou_pg.shape[1] else 0.0
+            rec["extra_kind"].append("trung" if mx >= a.match_iou else ("lech" if mx >= 0.1 else "nen"))
+            rec["extra_conf"].append(float(p_conf[pi]))
+            rec["extra_info"].append([img.name, names[int(p_cls[pi])], f"{p_conf[pi]:.3f}",
+                                      rec["extra_kind"][-1], *[int(v) for v in p_xyxy[pi]]])
 
     n_gt = len(rec["gt"])
     n_ok = sum(r["status"] == "ok" for r in rec["gt"])
@@ -134,6 +141,35 @@ def main():
             k = int(mask.sum())
             mi, co = int((st[mask] == "missed").sum()), int((st[mask] == "confused").sum())
             w.writerow([gname, f"{amax:.6f}", k, mi, f"{mi / k if k else 0:.4f}", co, f"{co / k if k else 0:.4f}"])
+
+    cls_arr = np.array([r["cls"] for r in rec["gt"]])
+    with open(out / "class_x_size.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["class", "nho_gt", "nho_missed", "vua_gt", "vua_missed", "lon_gt", "lon_missed"])
+        for i in range(n):
+            row = [labels[i]]
+            for _, mask in groups:
+                m = mask & (cls_arr == i)
+                row += [int(m.sum()), int((st[m] == "missed").sum())]
+            w.writerow(row)
+
+    with open(out / "false_pos_list.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["image", "pred_class", "conf", "kind", "x1", "y1", "x2", "y2"])
+        w.writerows(sorted(rec["extra_info"], key=lambda r: (r[0], -float(r[2]))))
+
+    kinds = np.array(rec["extra_kind"])
+    confs = np.array(rec["extra_conf"])
+    ex_cls = np.array(rec["extra"])
+    with open(out / "false_pos_kinds.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["pred_class", "false_pos", "trung_gt_da_ghep", "lech_iou_0.1_den_0.5",
+                    "nen_iou_duoi_0.1", "conf_trung_binh"])
+        for i in range(n):
+            m = ex_cls == i
+            w.writerow([labels[i], int(m.sum()), int((kinds[m] == "trung").sum()),
+                        int((kinds[m] == "lech").sum()), int((kinds[m] == "nen").sum()),
+                        f"{confs[m].mean():.3f}" if m.any() else ""])
 
     print(f"Tham so co dinh: conf={a.conf}, match IoU={a.match_iou}, imgsz={a.imgsz}, tap={a.split}")
     print(f"Nhan: {n_gt} | dung {n_ok} | nham lop {n_conf} | bo sot {n_miss} | bao thua {n_fp}")
