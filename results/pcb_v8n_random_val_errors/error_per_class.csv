@@ -1,0 +1,7 @@
+class,gt,correct,confused,missed,false_pos_by_pred_class
+missing_hole,101,101,0,0,0
+mouse_bite,106,102,2,2,4
+open_circuit,85,82,1,2,5
+short,98,94,0,4,4
+spur,93,81,0,12,2
+spurious_copper,97,91,0,6,4
