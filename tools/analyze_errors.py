@@ -74,7 +74,7 @@ def main():
     model = YOLO(a.weights)
     rec = {"gt": [], "extra": []}
     for r in model.predict(source=[str(p) for p in images], stream=True, verbose=False,
-                           imgsz=a.imgsz, conf=a.conf, device=a.device):
+                           imgsz=a.imgsz, conf=a.conf, device=a.device, batch=1):
         h, w = r.orig_shape
         img = Path(r.path)
         gts = read_labels(img)
