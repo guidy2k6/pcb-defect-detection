@@ -1,0 +1,11 @@
+path: ../dataset/pcb_boards_yolo
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: Mouse Bite
+  1: Spur
+  2: Missing Hole
+  3: Short
+  4: Open Circuit
+  5: Spurious Copper
