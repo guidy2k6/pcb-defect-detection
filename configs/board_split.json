@@ -1,0 +1,55 @@
+{
+  "train": [
+    "01",
+    "04",
+    "05",
+    "06",
+    "09",
+    "10"
+  ],
+  "val": [
+    "07",
+    "11"
+  ],
+  "test": [
+    "08",
+    "12"
+  ],
+  "swaps": [
+    {
+      "boards": [
+        "07",
+        "09"
+      ],
+      "reason": "Move board 07 to val and board 09 to train; the selected split covers all six classes and has box ratio 1.03."
+    },
+    {
+      "boards": [
+        "08",
+        "11"
+      ],
+      "reason": "Move board 08 to test and board 11 to train; the selected split covers all six classes and has box ratio 1.03."
+    },
+    {
+      "boards": [
+        "10",
+        "11"
+      ],
+      "reason": "Move board 10 to train and board 11 to val; the selected split covers all six classes and has box ratio 1.03."
+    }
+  ],
+  "selection_reason": "Exhaustive 6/2/2 search; every split contains all six classes and box counts are balanced.",
+  "stats": {
+    "box_counts": {
+      "train": 1749,
+      "val": 603,
+      "test": 601
+    },
+    "boxes_per_board": {
+      "train": 291.5,
+      "val": 301.5,
+      "test": 300.5
+    },
+    "max_min_boxes_per_board_ratio": 1.0343053173241852
+  }
+}
