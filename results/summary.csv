@@ -1,3 +1,5 @@
 run,split,eval_set,model,imgsz,P,R,mAP50,mAP50-95,ms_per_image
+pcb_v8n_board,Theo bo,val,yolov8n,1024,0.9728,0.9165,0.9722,0.5195,15.90
 pcb_v8n_random,Ngau nhien,val,yolov8n,1024,0.9702,0.9333,0.9668,0.5293,13.6
+pcb_v8s_board,Theo bo,val,yolov8s,1024,0.9752,0.9582,0.9782,0.5507,28.84
 pcb_v8s,Ngau nhien,val,yolov8s,1024,0.9728,0.9473,0.9672,0.5437,24.9
