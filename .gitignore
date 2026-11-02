@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+dataset/
+runs/
+*.pt
+!models/best.pt
+*.mp4
