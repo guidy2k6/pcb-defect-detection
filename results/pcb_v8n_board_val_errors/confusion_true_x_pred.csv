@@ -1,0 +1,8 @@
+true\pred,Mouse Bite,Spur,Missing Hole,Short,Open Circuit,Spurious Copper,missed
+Mouse Bite,100,0,0,0,0,0,0
+Spur,0,91,0,0,0,0,9
+Missing Hole,0,1,97,0,0,0,3
+Short,0,0,0,95,0,0,6
+Open Circuit,0,2,0,1,85,6,6
+Spurious Copper,0,0,1,0,0,98,2
+background(false_pos),0,9,9,5,2,3,

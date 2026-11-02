@@ -1,0 +1,29 @@
+image,pred_class,conf,kind,x1,y1,x2,y2
+07_mouse_bite_01.jpg,Missing Hole,0.285,trung,1928,627,1987,685
+07_mouse_bite_02.jpg,Missing Hole,0.367,trung,1919,620,1983,684
+07_mouse_bite_06.jpg,Short,0.349,lech,2035,591,2118,689
+07_open_circuit_07.jpg,Missing Hole,0.609,trung,1878,214,1938,266
+07_open_circuit_07.jpg,Missing Hole,0.436,lech,1882,224,1955,278
+07_open_circuit_09.jpg,Missing Hole,0.287,lech,2032,596,2113,712
+07_short_10.jpg,Short,0.646,trung,1943,411,2040,512
+07_spur_03.jpg,Spur,0.470,trung,1466,877,1530,1000
+07_spur_03.jpg,Spur,0.302,trung,1472,880,1533,967
+07_spur_04.jpg,Spur,0.552,lech,1464,875,1529,1005
+07_spur_04.jpg,Spur,0.465,trung,1469,877,1533,978
+07_spur_07.jpg,Spur,0.296,lech,1922,552,1991,625
+07_spurious_copper_05.jpg,Spur,0.272,trung,2204,594,2269,665
+07_spurious_copper_09.jpg,Spurious Copper,0.476,trung,1739,793,1789,903
+11_mouse_bite_05.jpg,Spur,0.457,lech,762,1594,829,1649
+11_mouse_bite_07.jpg,Spur,0.287,lech,521,207,598,256
+11_mouse_bite_07.jpg,Open Circuit,0.260,lech,1314,350,1389,413
+11_mouse_bite_08.jpg,Spur,0.632,lech,684,1055,802,1124
+11_open_circuit_02.jpg,Missing Hole,0.837,nen,305,544,377,608
+11_open_circuit_04.jpg,Missing Hole,0.392,lech,1079,110,1145,166
+11_open_circuit_08.jpg,Missing Hole,0.396,trung,1292,656,1357,721
+11_open_circuit_10.jpg,Spurious Copper,0.275,trung,1321,1871,1372,1941
+11_short_01.jpg,Short,0.382,trung,686,1338,795,1421
+11_short_04.jpg,Short,0.359,lech,324,1617,496,1720
+11_short_08.jpg,Short,0.763,lech,1088,1388,1182,1469
+11_spur_07.jpg,Spurious Copper,0.281,trung,333,848,401,980
+11_spur_08.jpg,Open Circuit,0.276,lech,471,281,531,344
+11_spurious_copper_09.jpg,Missing Hole,0.361,trung,1138,1688,1208,1756
