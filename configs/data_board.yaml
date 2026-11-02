@@ -1,7 +1,6 @@
-path: ../dataset/pcb_boards_yolo
-train: images/train
-val: images/val
-test: images/test
+train: ../dataset/pcb_boards_yolo/images/train
+val: ../dataset/pcb_boards_yolo/images/val
+test: ../dataset/pcb_boards_yolo/images/test
 names:
   0: Mouse Bite
   1: Spur

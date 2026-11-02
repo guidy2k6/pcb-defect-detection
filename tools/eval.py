@@ -56,6 +56,7 @@ def main():
 
     speed = m.speed  # ms/anh: preprocess, inference, loss, postprocess
     ms = speed["preprocess"] + speed["inference"] + speed["postprocess"]
+    (out_dir / "speed.txt").write_text(f"{ms:.2f}", encoding="utf-8")  # build_summary.py doc file nay
     if a.split == "test":
         with open(test_csv, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)

@@ -1,0 +1,7 @@
+class,gt,correct,confused,missed,false_pos_by_pred_class
+Mouse Bite,100,100,0,0,0
+Spur,100,96,0,4,1
+Missing Hole,101,101,0,0,1
+Short,101,100,0,1,11
+Open Circuit,100,93,3,4,5
+Spurious Copper,101,99,0,2,2
