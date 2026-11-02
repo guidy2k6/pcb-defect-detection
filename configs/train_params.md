@@ -9,6 +9,8 @@
 - Môi trường: anaconda base, Python 3.14.6, Ultralytics 8.4.194, torch 2.14.1+cu126.
 - Số liệu dùng cho slide được đo lại bằng `tools/eval.py` (batch 8, imgsz 1024, val chia ngẫu nhiên): v8n P 0,970, R 0,933, mAP50 0,967, mAP50-95 0,529, 13,6 ms/ảnh; v8s P 0,973, R 0,947, mAP50 0,967, mAP50-95 0,544, 24,9 ms/ảnh. Lệch nhẹ so với số in cuối lúc train.
 - `analyze_errors.py`: conf 0,25; IoU ghép 0,5; imgsz 1024.
+- Test (chạy một lần, `pcb_v8s_board`, bo 08 và 12, `tools/eval.py`): P 0,854, R 0,934, mAP50 0,972, mAP50-95 0,516, 31,9 ms/ảnh. Precision thấp ở Mouse Bite (0,627) và Short (0,613) trong khi recall cao (0,980 và 0,990); Open Circuit có P 1,000 nhưng R 0,714.
+- `pcb_cls_board` (bộ phân loại): `yolov8n-cls.pt`, ảnh cắt 128x128 theo nhãn (lề 50%, `data/io/collect_crops.py`, chia theo bo: train 1749, val 603, test 601 ảnh), batch 64, epochs 50, patience 15. Dừng sớm ở epoch 31, best epoch 16, 0,11 giờ. Top-1: val 1,000, test 0,990 (595 đúng, 6 sai: 5 ảnh Open Circuit nhận thành Spurious Copper, 1 ảnh Spur nhận thành Missing Hole). Đây là cận trên vì ảnh cắt đúng theo nhãn thật.
 - `pcb_v8s_board`: chia theo bo (train 453, val 120, test 120 ảnh; val là bo 07 và 11). Bị ngắt giữa chừng, train tiếp bằng `resume=True` từ epoch 36; thư mục run gốc là `pcb_v8s_board-3`, sau đó đổi tên. Dừng ở epoch <điền>, best epoch <điền>. Đo bằng `tools/eval.py` trên val: P 0,975, R 0,958, mAP50 0,978, mAP50-95 0,551, 28,8 ms/ảnh. Phân tích lỗi (`analyze_errors.py`): 603 nhãn, đúng 589, nhầm lớp 3, bỏ sót 11, báo thừa 20.
 - `pcb_v8n_board`: máy tắt giữa chừng sau epoch đầu, train tiếp bằng `resume=True` từ `last.pt` (lần resume không ghi thêm dòng vào bảng bên dưới; dòng 12:33 là lần khởi chạy đầu). Dừng sớm ở epoch 78 (best epoch 48, patience 30), 1,9 giờ. Đo bằng `tools/eval.py` trên val theo bo: P 0,973, R 0,917, mAP50 0,972, mAP50-95 0,519, 15,9 ms/ảnh. Phân tích lỗi: 603 nhãn, đúng 566, nhầm lớp 11, bỏ sót 26, báo thừa 28.
 - `analyze_errors.py` của `pcb_v8s_board` chạy với `--device cpu` vì predict trên GPU báo OOM lúc đó (eval và train trên GPU không bị lỗi này); `pcb_v8n_board` chạy trên GPU không lỗi.
@@ -20,4 +22,5 @@
 |---|---|---|---|---|---|---|---|---|---|
 | 2026-10-31 09:13 | pcb_v8n_random | yolov8n.pt | C:/Users/Admin/Downloads/pcb_yolo/data.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 |
 | 2026-11-02 08:31 | pcb_v8s_board | yolov8s.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 |
-| 2026-11-02 12:33 | pcb_v8n_board | yolov8n.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 |
+| 2026-11-02 12:33 | pcb_v8n_board | yolov8n.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 || 2026-11-02 15:34 | pcb_cls_board | yolov8n-cls.pt | C:\Project\pcb-defect-detection\dataset\cls | 128 | 64 | 50 | 15 | 0 | 8.4.194 |
+| 2026-11-02 15:43 | pcb_best_640 | yolov8s.pt | configs/data_board.yaml | 640 | 8 | 100 | 30 | 0 | 8.4.194 |
