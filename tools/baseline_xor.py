@@ -1,7 +1,10 @@
 
 import argparse
+import csv
 from collections.abc import Iterable
 from pathlib import Path
+import xml.etree.ElementTree as ET
+
 import cv2
 import numpy as np
 
@@ -60,6 +63,19 @@ def binarize_and_xor(
     c: float = 2,
 ) -> np.ndarray:
     """Nhị phân hóa thích ứng hai ảnh xám rồi XOR để tìm vùng khác biệt."""
+    binary_base, binary_def = binarize_pair(
+        img_base_gray, img_def_gray, block_size, c
+    )
+    return cv2.bitwise_xor(binary_base, binary_def)
+
+
+def binarize_pair(
+    img_base_gray: np.ndarray,
+    img_def_gray: np.ndarray,
+    block_size: int = 11,
+    c: float = 2,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Nhị phân hóa thích ứng hai ảnh xám."""
     if img_base_gray.ndim != 2 or img_def_gray.ndim != 2:
         raise ValueError("Hai đầu vào phải là ảnh xám một kênh")
     if img_base_gray.dtype != np.uint8 or img_def_gray.dtype != np.uint8:
@@ -85,7 +101,7 @@ def binarize_and_xor(
         block_size,
         c,
     )
-    return cv2.bitwise_xor(binary_base, binary_def)
+    return binary_base, binary_def
 
 
 def post_process_and_extract_bboxes(
@@ -119,12 +135,16 @@ def post_process_and_extract_bboxes(
     return clean_mask, bboxes
 
 
-def align_and_xor(
+def process_pair(
     baseline_path: Path,
     defect_path: Path,
     lowe_ratio: float = 0.75,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Căn chỉnh ảnh bằng SIFT (thay cho SURF của [1]) và tính hiệu ảnh (XOR)."""
+) -> tuple[
+    dict[str, np.ndarray],
+    list[tuple[int, int, int, int, int]],
+    np.ndarray,
+]:
+    """Căn chỉnh hai ảnh, tạo mask XOR và trả các ảnh trung gian."""
     # 1. Đọc ảnh màu và chuyển sang ảnh xám
     img_base_color = cv2.imread(str(baseline_path), cv2.IMREAD_COLOR)
     img_def_color = cv2.imread(str(defect_path), cv2.IMREAD_COLOR)
@@ -183,25 +203,54 @@ def align_and_xor(
     h, w = img_base_gray.shape
     aligned_def_gray = cv2.warpPerspective(img_def_gray, H, (w, h))
 
-    # 6. Phép toán XOR / Hiệu ảnh để tìm vùng lỗi
-    diff_xor = binarize_and_xor(img_base_gray, aligned_def_gray)
-    diff_xor, bboxes = post_process_and_extract_bboxes(diff_xor)
+    # 6. Nhị phân hóa, XOR và lọc nhiễu
+    binary_base, binary_def = binarize_pair(img_base_gray, aligned_def_gray)
+    diff_xor_raw = cv2.bitwise_xor(binary_base, binary_def)
+    diff_xor_filtered, bboxes = post_process_and_extract_bboxes(diff_xor_raw)
 
-    # Tạo ảnh overlay màu quan sát trực quan
+    # Tạo ảnh overlay màu để quan sát căn chỉnh và kết quả cuối
     aligned_def_color = cv2.warpPerspective(
         img_def_color, H, (w, h)
     )
-    overlay = cv2.addWeighted(img_base_color, 0.5, aligned_def_color, 0.5, 0)
+    alignment_overlay = cv2.addWeighted(
+        img_base_color, 0.5, aligned_def_color, 0.5, 0
+    )
+    final_boxes = alignment_overlay.copy()
     for x, y, box_width, box_height, _ in bboxes:
         cv2.rectangle(
-            overlay,
+            final_boxes,
             (x, y),
             (x + box_width - 1, y + box_height - 1),
             (0, 0, 255),
             2,
         )
 
-    return img_base_gray, aligned_def_gray, diff_xor, overlay
+    return {
+        "baseline_gray": img_base_gray,
+        "defect_gray": img_def_gray,
+        "aligned_defect_gray": aligned_def_gray,
+        "alignment_overlay": alignment_overlay,
+        "baseline_binary": binary_base,
+        "defect_binary": binary_def,
+        "xor_raw": diff_xor_raw,
+        "after_filter": diff_xor_filtered,
+        "final_boxes": final_boxes,
+    }, bboxes, H
+
+
+def align_and_xor(
+    baseline_path: Path,
+    defect_path: Path,
+    lowe_ratio: float = 0.75,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Giữ giao diện cũ; căn chỉnh ảnh bằng SIFT và tính XOR."""
+    images, _, _ = process_pair(baseline_path, defect_path, lowe_ratio)
+    return (
+        images["baseline_gray"],
+        images["aligned_defect_gray"],
+        images["after_filter"],
+        images["final_boxes"],
+    )
 
 
 def _image_files(directory: Path) -> list[Path]:
@@ -214,13 +263,67 @@ def _image_files(directory: Path) -> list[Path]:
     )
 
 
+def _annotation_index(annotation_dir: Path) -> dict[str, list[Path]]:
+    if not annotation_dir.is_dir():
+        raise NotADirectoryError(f"Không tìm thấy thư mục annotation: {annotation_dir}")
+    annotations: dict[str, list[Path]] = {}
+    for path in annotation_dir.rglob("*.xml"):
+        annotations.setdefault(path.stem.casefold(), []).append(path)
+    return annotations
+
+
+def _label_box_count(
+    defect_path: Path,
+    annotations: dict[str, list[Path]],
+) -> tuple[Path, int]:
+
+    matches = annotations.get(defect_path.stem.casefold(), [])
+
+    if not matches:
+        raise FileNotFoundError(
+            f"Không tìm thấy XML nhãn cho ảnh lỗi: {defect_path.name}"
+        )
+
+    if len(matches) > 1:
+        raise ValueError(
+            f"Có nhiều XML cùng tên cho ảnh {defect_path.name}: "
+            + ", ".join(str(path) for path in matches)
+        )
+
+    annotation_path = matches[0]
+    root = ET.parse(annotation_path).getroot()
+
+    annotated_filename = root.findtext("filename")
+
+    if (
+        annotated_filename
+        and Path(annotated_filename).name.casefold()
+        != defect_path.name.casefold()
+    ):
+        raise ValueError(
+            f"Tên ảnh trong {annotation_path} không khớp "
+            f"với {defect_path.name}"
+        )
+
+    # Chỉ đếm object có bounding box
+    objects = root.findall("object")
+
+    label_count = sum(
+        1 for obj in objects
+        if obj.find("bndbox") is not None
+    )
+
+    return annotation_path, label_count
+
+
 def save_overlay_pairs(
     baseline_dir: Path,
     defect_dir: Path,
     output_dir: Path,
     limit: int = 5,
+    annotation_dir: Path | None = None,
 ) -> list[Path]:
-    """Căn chỉnh tối đa limit cặp ảnh và lưu ảnh overlay."""
+    """Chạy tối đa limit cặp, lưu các bước xử lý và đối chiếu số box nhãn."""
     if limit < 1:
         raise ValueError("Số cặp ảnh cần chạy phải lớn hơn 0")
 
@@ -255,37 +358,178 @@ def save_overlay_pairs(
     total_run = len(selected_pairs)
     success_count = 0
     output_dir.mkdir(parents=True, exist_ok=True)
+    annotation_dir = (
+        annotation_dir
+        if annotation_dir is not None
+        else defect_dir.parent.parent / "Annotations"
+    )
+    annotations = _annotation_index(annotation_dir)
+    summary_rows = []
+    failure_rows = []
     saved_paths = []
+
     for baseline_path, defect_path in selected_pairs:
+
+        pair_name = f"{baseline_path.stem}__{defect_path.stem}"
+        pair_dir = output_dir / pair_name
+        pair_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Đọc số box nhãn
+        annotation_path = None
+        label_count = None
+        annotation_error = ""
+
         try:
-            _, _, _, overlay = align_and_xor(baseline_path, defect_path)
-        except ValueError as err:
-            print(
-                f"Failed: {baseline_path.name} + {defect_path.name}: {err}"
+            annotation_path, label_count = _label_box_count(
+                defect_path, annotations
             )
+
+        except (FileNotFoundError, ValueError, ET.ParseError, OSError) as err:
+            annotation_error = str(err)
+            print(f"Annotation warning: {pair_name}: {err}")
+
+        # 2. Căn chỉnh và xử lý ảnh
+        try:
+            images, bboxes, _ = process_pair(
+                baseline_path, defect_path
+            )
+
+        except (ValueError, FileNotFoundError, cv2.error) as err:
+
+            reason = str(err)
+
+            # Lưu ảnh xám kể cả khi căn chỉnh thất bại
+            for image_path, gray_name in (
+                (baseline_path, "baseline_gray.png"),
+                (defect_path, "defect_gray.png"),
+            ):
+                color_image = cv2.imread(
+                    str(image_path), cv2.IMREAD_COLOR
+                )
+
+                if color_image is None:
+                    raise FileNotFoundError(
+                        f"Không thể đọc ảnh: {image_path}"
+                    )
+
+                gray_path = pair_dir / gray_name
+
+                if not cv2.imwrite(
+                    str(gray_path), to_gray(color_image)
+                ):
+                    raise OSError(f"Không thể lưu ảnh: {gray_path}")
+
+            # Ghi nhận cặp căn chỉnh thất bại
+            failure_rows.append({
+                "baseline_image": baseline_path.name,
+                "defect_image": defect_path.name,
+                "reason": reason,
+            })
+
+            summary_rows.append({
+                "baseline_image": baseline_path.name,
+                "defect_image": defect_path.name,
+                "annotation": str(annotation_path or ""),
+                "label_box_count": (
+                    label_count if label_count is not None else ""
+                ),
+                "detected_box_count": "",
+                "difference": "",
+                "annotation_status": (
+                    "found" if label_count is not None else "missing"
+                ),
+                "annotation_error": annotation_error,
+                "status": "alignment_failed",
+            })
+
+            print(f"Alignment failed: {pair_name}: {reason}")
             continue
 
-        output_path = output_dir / (
-            f"{baseline_path.stem}__{defect_path.stem}_overlay.jpg"
+        # 3. Lưu tất cả ảnh trung gian
+        for image_name, image in images.items():
+
+            extension = ".jpg" if image.ndim == 3 else ".png"
+            output_path = pair_dir / f"{image_name}{extension}"
+
+            if not cv2.imwrite(str(output_path), image):
+                raise OSError(f"Không thể lưu ảnh: {output_path}")
+
+            if image_name == "final_boxes":
+                saved_paths.append(output_path)
+
+        # 4. Đếm số box thuật toán phát hiện
+        detected_count = len(bboxes)
+
+        # Chỉ tính chênh lệch khi có nhãn
+        difference = (
+            detected_count - label_count
+            if label_count is not None
+            else ""
         )
-        if not cv2.imwrite(str(output_path), overlay):
-            raise OSError(f"Không thể lưu ảnh overlay: {output_path}")
-        saved_paths.append(output_path)
+
+        # 5. Ghi kết quả
+        summary_rows.append({
+            "baseline_image": baseline_path.name,
+            "defect_image": defect_path.name,
+            "annotation": str(annotation_path or ""),
+            "label_box_count": (
+                label_count if label_count is not None else ""
+            ),
+            "detected_box_count": detected_count,
+            "difference": difference,
+            "annotation_status": (
+                "found" if label_count is not None else "missing"
+            ),
+            "annotation_error": annotation_error,
+            "status": "ok" if label_count is not None else "annotation_missing",
+        })
+
         success_count += 1
-        print(f"Success: {baseline_path.name} + {defect_path.name}")
+
+        print(
+            f"{pair_name}: detected {detected_count} boxes; "
+            f"labels {label_count}; difference {difference}"
+        )
+
+
+    summary_path = output_dir / "summary.csv"
+    with summary_path.open("w", newline="", encoding="utf-8-sig") as file:
+        writer = csv.DictWriter(file, fieldnames=[
+            "baseline_image",
+            "defect_image",
+            "annotation",
+            "label_box_count",
+            "detected_box_count",
+            "difference",
+            "annotation_status",
+            "annotation_error",
+            "status",
+        ])
+        writer.writeheader()
+        writer.writerows(summary_rows)
+
+    failures_path = output_dir / "alignment_failures.csv"
+    with failures_path.open("w", newline="", encoding="utf-8-sig") as file:
+        writer = csv.DictWriter(
+            file, fieldnames=["baseline_image", "defect_image", "reason"]
+        )
+        writer.writeheader()
+        writer.writerows(failure_rows)
 
     success_rate = success_count / total_run * 100
     print(
         f"Alignment success rate: {success_count}/{total_run} "
         f"- {success_rate:.2f}%."
     )
-    print(f"Saved {len(saved_paths)}/{total_run} overlays.")
+    print(f"Saved intermediate images under: {output_dir}")
+    print(f"Summary: {summary_path}")
+    print(f"Alignment failures: {failures_path} ({len(failure_rows)})")
     return saved_paths
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Căn chỉnh ảnh PCB bằng SIFT và lưu ảnh overlay."
+        description="Căn chỉnh ảnh PCB bằng SIFT, lưu các bước XOR và so số box."
     )
     parser.add_argument(
         "--baseline-dir",
@@ -302,8 +546,14 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("output/overlays"),
-        help="Thư mục lưu overlay (mặc định: output/overlays)",
+        default=Path("output/baseline_xor"),
+        help="Thư mục lưu ảnh từng bước và CSV kết quả",
+    )
+    parser.add_argument(
+        "--annotation-dir",
+        type=Path,
+        default=None,
+        help="Thư mục XML nhãn (mặc định: thư mục Annotations cạnh images)",
     )
     parser.add_argument(
         "--limit",
@@ -317,6 +567,7 @@ def main() -> None:
         args.defect_dir,
         args.output_dir,
         args.limit,
+        args.annotation_dir,
     )
 
 
