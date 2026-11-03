@@ -2,9 +2,9 @@ train: ../dataset/pcb_boards_yolo/images/train
 val: ../dataset/pcb_boards_yolo/images/val
 test: ../dataset/pcb_boards_yolo/images/test
 names:
-  0: Mouse Bite
-  1: Spur
-  2: Missing Hole
-  3: Short
-  4: Open Circuit
-  5: Spurious Copper
+  0: missing_hole
+  1: mouse_bite
+  2: open_circuit
+  3: short
+  4: spur
+  5: spurious_copper
