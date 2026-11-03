@@ -1,0 +1,8 @@
+true\pred,missing_hole,mouse_bite,open_circuit,short,spur,spurious_copper
+missing_hole,53,0,0,0,0,0
+mouse_bite,0,98,0,0,0,0
+open_circuit,0,0,95,0,0,0
+short,0,0,0,39,0,0
+spur,0,0,0,0,30,0
+spurious_copper,0,1,0,0,0,55
+accuracy,0.9973,n=371

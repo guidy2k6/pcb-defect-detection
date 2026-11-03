@@ -225,3 +225,6 @@ runs/
 !models/best.pt
 *.mp4
 *.zip
+
+PCB_DATASET/
+*.rar

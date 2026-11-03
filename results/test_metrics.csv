@@ -1,2 +1,2 @@
 weights,data,imgsz,precision,recall,AP50,AP50-95,ms_per_image
-runs/detect/pcb_v8s_board/weights/best.pt,configs/data_board.yaml,1024,0.8543,0.9336,0.9720,0.5162,31.91
+models/best.pt,configs/data_board.yaml,1024,0.8543,0.9336,0.9720,0.5162,25.71

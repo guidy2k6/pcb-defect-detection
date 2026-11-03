@@ -17,14 +17,14 @@ REPO = Path(__file__).resolve().parents[1]
 def run_info(run, results):
     """Suy ra cach chia, mo hinh, imgsz tu ten run (+ args.yaml neu co). pcb_v8s (chay 06/10) la chia ngau nhien."""
     base = run.rsplit("_", 1)[0] if run.endswith(("_val", "_test")) else run
-    split = "Theo bo" if "board" in base else "Ngau nhien"
-    m = re.search(r"v8([nsmlx])", base)
-    model = f"yolov8{m.group(1)}" if m else "?"
-    imgsz = ""
+    cfg = {}
     args = results / base / "args.yaml"
     if args.exists():
-        imgsz = yaml.safe_load(args.read_text(encoding="utf-8")).get("imgsz", "")
-    return base, split, model, imgsz
+        cfg = yaml.safe_load(args.read_text(encoding="utf-8"))
+    split = "Theo bo" if "board" in base or "data_board" in str(cfg.get("data", "")) else "Ngau nhien"
+    m = re.search(r"v8([nsmlx])", base) or re.search(r"yolov8([nsmlx])", str(cfg.get("model", "")))
+    model = f"yolov8{m.group(1)}" if m else {"pcb_best_640": "yolov8s"}.get(base, "?")
+    return base, split, model, cfg.get("imgsz", "")
 
 
 def main():
