@@ -1,0 +1,6 @@
+﻿baseline_image,defect_image,annotation,label_box_count,detected_box_count,difference,annotation_status,annotation_error,status
+01.JPG,01_mouse_bite_01.jpg,PCB_DATASET\PCB_DATASET\Annotations\Mouse_bite\01_mouse_bite_01.xml,3,8,5,found,,ok
+04.JPG,04_mouse_bite_09.jpg,PCB_DATASET\PCB_DATASET\Annotations\Mouse_bite\04_mouse_bite_09.xml,3,12,9,found,,ok
+06.JPG,06_mouse_bite_08.jpg,PCB_DATASET\PCB_DATASET\Annotations\Mouse_bite\06_mouse_bite_08.xml,6,34,28,found,,ok
+09.JPG,09_mouse_bite_06.jpg,PCB_DATASET\PCB_DATASET\Annotations\Mouse_bite\09_mouse_bite_06.xml,5,16,11,found,,ok
+12.JPG,12_mouse_bite_10.jpg,PCB_DATASET\PCB_DATASET\Annotations\Mouse_bite\12_mouse_bite_10.xml,5,20,15,found,,ok
