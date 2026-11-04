@@ -6,13 +6,13 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
-CLASS_NAMES = ["Mouse Bite", "Spur", "Missing Hole", "Short", "Open Circuit", "Spurious Copper"]
+CLASS_NAMES = ["Missing Hole", "Mouse Bite", "Open Circuit", "Short", "Spur", "Spurious Copper"]
 CLASS_IDS = {
-    "mousebite": 0,
-    "spur": 1,
-    "missinghole": 2,
+    "missinghole": 0,
+    "mousebite": 1,
+    "opencircuit": 2,
     "short": 3,
-    "opencircuit": 4,
+    "spur": 4,
     "spuriouscopper": 5,
 }
 IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp")

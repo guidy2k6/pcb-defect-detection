@@ -1,0 +1,308 @@
+image,pred_class,conf,kind,x1,y1,x2,y2
+08_missing_hole_01.jpg,Missing Hole,0.598,nen,145,1043,221,1119
+08_missing_hole_01.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_missing_hole_02.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_missing_hole_02.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+08_missing_hole_03.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_missing_hole_03.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_missing_hole_04.jpg,Missing Hole,0.354,nen,148,1044,220,1119
+08_missing_hole_04.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_missing_hole_05.jpg,Missing Hole,0.368,nen,148,1044,220,1119
+08_missing_hole_05.jpg,Missing Hole,0.342,nen,1706,471,1800,550
+08_missing_hole_06.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_missing_hole_06.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_missing_hole_07.jpg,Missing Hole,0.591,nen,145,1043,221,1118
+08_missing_hole_07.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+08_missing_hole_08.jpg,Missing Hole,0.601,nen,145,1043,221,1119
+08_missing_hole_08.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_missing_hole_09.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_missing_hole_10.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_missing_hole_10.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_mouse_bite_01.jpg,Mouse Bite,0.610,nen,248,1775,281,1826
+08_mouse_bite_01.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_01.jpg,Missing Hole,0.336,nen,1706,471,1800,550
+08_mouse_bite_02.jpg,Missing Hole,0.590,nen,146,1043,221,1119
+08_mouse_bite_02.jpg,Missing Hole,0.286,nen,1706,471,1799,549
+08_mouse_bite_03.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_03.jpg,Mouse Bite,0.566,lech,1253,1250,1294,1367
+08_mouse_bite_03.jpg,Missing Hole,0.342,nen,1706,471,1800,550
+08_mouse_bite_04.jpg,Missing Hole,0.597,nen,145,1043,221,1119
+08_mouse_bite_04.jpg,Missing Hole,0.342,nen,1706,471,1800,550
+08_mouse_bite_05.jpg,Mouse Bite,0.638,nen,612,1982,663,2015
+08_mouse_bite_05.jpg,Missing Hole,0.600,nen,145,1043,221,1119
+08_mouse_bite_05.jpg,Missing Hole,0.302,nen,1706,471,1800,550
+08_mouse_bite_06.jpg,Mouse Bite,0.718,nen,2402,1024,2454,1087
+08_mouse_bite_06.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_06.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_mouse_bite_07.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_07.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+08_mouse_bite_08.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_08.jpg,Missing Hole,0.343,nen,1706,471,1800,550
+08_mouse_bite_09.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_09.jpg,Missing Hole,0.331,nen,1706,471,1800,550
+08_mouse_bite_10.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_mouse_bite_10.jpg,Missing Hole,0.342,nen,1706,471,1800,550
+08_open_circuit_01.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_open_circuit_01.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+08_open_circuit_02.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_open_circuit_02.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_open_circuit_03.jpg,Missing Hole,0.595,nen,145,1043,221,1119
+08_open_circuit_03.jpg,Open Circuit,0.559,nen,1721,1164,1760,1203
+08_open_circuit_03.jpg,Missing Hole,0.340,nen,1706,471,1800,550
+08_open_circuit_04.jpg,Missing Hole,0.570,nen,146,1043,221,1119
+08_open_circuit_04.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_open_circuit_05.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_open_circuit_05.jpg,Missing Hole,0.336,nen,1706,471,1800,550
+08_open_circuit_06.jpg,Missing Hole,0.576,nen,146,1043,221,1119
+08_open_circuit_06.jpg,Missing Hole,0.331,nen,1706,471,1800,550
+08_open_circuit_07.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_open_circuit_07.jpg,Missing Hole,0.342,nen,1706,471,1800,550
+08_open_circuit_08.jpg,Missing Hole,0.587,nen,145,1043,221,1119
+08_open_circuit_08.jpg,Missing Hole,0.339,nen,1706,471,1800,550
+08_open_circuit_09.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_open_circuit_09.jpg,Missing Hole,0.303,nen,1706,472,1800,549
+08_open_circuit_10.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_open_circuit_10.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_short_01.jpg,Missing Hole,0.597,nen,145,1043,221,1119
+08_short_01.jpg,Missing Hole,0.348,nen,1706,470,1799,550
+08_short_02.jpg,Missing Hole,0.597,nen,145,1043,221,1119
+08_short_02.jpg,Missing Hole,0.349,nen,1706,471,1800,549
+08_short_03.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_short_03.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_short_04.jpg,Short,0.733,nen,1133,1790,1198,1859
+08_short_04.jpg,Missing Hole,0.600,nen,145,1043,221,1119
+08_short_04.jpg,Missing Hole,0.335,nen,1706,471,1800,550
+08_short_05.jpg,Short,0.628,nen,2515,1571,2593,1642
+08_short_05.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_short_05.jpg,Missing Hole,0.354,nen,1706,470,1799,550
+08_short_06.jpg,Missing Hole,0.597,nen,145,1043,221,1119
+08_short_06.jpg,Missing Hole,0.295,nen,1706,471,1800,550
+08_short_07.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_short_07.jpg,Missing Hole,0.334,nen,1706,471,1800,550
+08_short_08.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_short_08.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+08_short_09.jpg,Missing Hole,0.596,nen,145,1043,221,1119
+08_short_09.jpg,Missing Hole,0.321,nen,1706,471,1800,550
+08_short_10.jpg,Missing Hole,0.598,nen,145,1043,221,1119
+08_short_10.jpg,Missing Hole,0.326,nen,1706,471,1800,550
+08_spur_01.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spur_01.jpg,Spur,0.316,trung,605,1935,689,1976
+08_spur_01.jpg,Missing Hole,0.310,nen,1706,471,1800,550
+08_spur_02.jpg,Missing Hole,0.597,nen,145,1043,221,1119
+08_spur_02.jpg,Missing Hole,0.343,nen,1706,471,1800,550
+08_spur_03.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spur_03.jpg,Missing Hole,0.334,nen,1706,471,1800,550
+08_spur_04.jpg,Missing Hole,0.598,nen,145,1043,221,1119
+08_spur_04.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_spur_05.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spur_05.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_spur_06.jpg,Missing Hole,0.595,nen,145,1043,221,1119
+08_spur_06.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_spur_07.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spur_07.jpg,Missing Hole,0.331,nen,1706,471,1800,550
+08_spur_07.jpg,Spur,0.300,trung,1245,1303,1291,1396
+08_spur_08.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spur_08.jpg,Missing Hole,0.342,nen,1706,471,1800,550
+08_spur_09.jpg,Missing Hole,0.601,nen,145,1043,221,1119
+08_spur_09.jpg,Missing Hole,0.334,nen,1706,471,1800,550
+08_spur_10.jpg,Missing Hole,0.597,nen,145,1043,221,1119
+08_spur_10.jpg,Mouse Bite,0.346,lech,2386,1263,2445,1324
+08_spur_10.jpg,Missing Hole,0.311,nen,1706,471,1800,550
+08_spur_10.jpg,Mouse Bite,0.283,lech,2384,1267,2444,1363
+08_spurious_copper_01.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spurious_copper_01.jpg,Missing Hole,0.299,nen,1706,471,1800,550
+08_spurious_copper_02.jpg,Missing Hole,0.596,nen,145,1043,221,1119
+08_spurious_copper_02.jpg,Missing Hole,0.344,nen,1706,471,1800,550
+08_spurious_copper_03.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spurious_copper_03.jpg,Missing Hole,0.334,nen,1706,471,1800,550
+08_spurious_copper_04.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spurious_copper_04.jpg,Missing Hole,0.344,nen,1706,471,1800,550
+08_spurious_copper_05.jpg,Missing Hole,0.598,nen,145,1043,221,1119
+08_spurious_copper_05.jpg,Missing Hole,0.320,nen,1706,471,1800,550
+08_spurious_copper_06.jpg,Missing Hole,0.596,nen,145,1043,221,1119
+08_spurious_copper_06.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+08_spurious_copper_07.jpg,Spurious Copper,0.784,lech,2432,981,2471,1048
+08_spurious_copper_07.jpg,Missing Hole,0.596,nen,145,1043,221,1119
+08_spurious_copper_07.jpg,Missing Hole,0.345,nen,1706,471,1800,550
+08_spurious_copper_08.jpg,Missing Hole,0.598,nen,145,1043,221,1119
+08_spurious_copper_08.jpg,Missing Hole,0.312,nen,1706,471,1800,550
+08_spurious_copper_09.jpg,Missing Hole,0.598,nen,145,1043,221,1119
+08_spurious_copper_09.jpg,Missing Hole,0.334,nen,1706,471,1800,550
+08_spurious_copper_10.jpg,Missing Hole,0.599,nen,145,1043,221,1119
+08_spurious_copper_10.jpg,Missing Hole,0.346,nen,1706,471,1800,550
+12_missing_hole_01.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_missing_hole_01.jpg,Short,0.380,nen,1539,1081,1608,1143
+12_missing_hole_01.jpg,Spurious Copper,0.304,nen,1680,1530,1764,1613
+12_missing_hole_02.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_missing_hole_02.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_missing_hole_02.jpg,Spurious Copper,0.311,nen,1680,1530,1764,1613
+12_missing_hole_03.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_missing_hole_03.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_missing_hole_03.jpg,Spurious Copper,0.310,nen,1680,1530,1764,1613
+12_missing_hole_04.jpg,Short,0.632,nen,1158,1124,1223,1193
+12_missing_hole_04.jpg,Spurious Copper,0.309,nen,1680,1530,1764,1613
+12_missing_hole_04.jpg,Short,0.279,nen,1540,1081,1608,1143
+12_missing_hole_05.jpg,Short,0.562,nen,1159,1124,1223,1192
+12_missing_hole_05.jpg,Short,0.381,nen,1539,1081,1608,1143
+12_missing_hole_05.jpg,Spurious Copper,0.302,nen,1680,1530,1764,1613
+12_missing_hole_06.jpg,Short,0.637,nen,1158,1124,1223,1193
+12_missing_hole_06.jpg,Spurious Copper,0.312,nen,1680,1530,1764,1613
+12_missing_hole_06.jpg,Short,0.280,nen,1539,1081,1607,1143
+12_missing_hole_07.jpg,Short,0.636,nen,1158,1124,1223,1193
+12_missing_hole_07.jpg,Short,0.384,nen,1539,1081,1608,1143
+12_missing_hole_07.jpg,Spurious Copper,0.315,nen,1680,1530,1764,1613
+12_missing_hole_08.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_missing_hole_08.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_missing_hole_08.jpg,Spurious Copper,0.314,nen,1680,1530,1764,1613
+12_missing_hole_09.jpg,Short,0.644,nen,1158,1124,1223,1193
+12_missing_hole_09.jpg,Short,0.383,nen,1539,1081,1608,1143
+12_missing_hole_09.jpg,Spurious Copper,0.321,nen,1680,1530,1764,1613
+12_missing_hole_10.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_missing_hole_10.jpg,Short,0.380,nen,1539,1081,1608,1143
+12_missing_hole_10.jpg,Spurious Copper,0.314,nen,1680,1530,1764,1613
+12_mouse_bite_01.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_mouse_bite_01.jpg,Short,0.391,nen,1539,1081,1608,1143
+12_mouse_bite_02.jpg,Short,0.632,nen,1158,1124,1223,1192
+12_mouse_bite_02.jpg,Short,0.388,nen,1539,1081,1608,1143
+12_mouse_bite_02.jpg,Spurious Copper,0.357,nen,1680,1530,1764,1613
+12_mouse_bite_03.jpg,Short,0.630,nen,1158,1124,1223,1193
+12_mouse_bite_03.jpg,Short,0.391,nen,1539,1081,1608,1143
+12_mouse_bite_03.jpg,Spurious Copper,0.300,nen,1680,1530,1764,1613
+12_mouse_bite_04.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_mouse_bite_04.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_mouse_bite_05.jpg,Short,0.639,nen,1158,1124,1223,1193
+12_mouse_bite_05.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_mouse_bite_05.jpg,Spurious Copper,0.354,nen,1677,1531,1763,1612
+12_mouse_bite_06.jpg,Mouse Bite,0.650,nen,2196,1044,2264,1083
+12_mouse_bite_06.jpg,Short,0.633,nen,1158,1124,1223,1193
+12_mouse_bite_06.jpg,Short,0.393,nen,1539,1081,1608,1143
+12_mouse_bite_06.jpg,Spurious Copper,0.335,nen,1677,1531,1763,1612
+12_mouse_bite_07.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_mouse_bite_07.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_mouse_bite_07.jpg,Spurious Copper,0.322,nen,1680,1530,1764,1613
+12_mouse_bite_08.jpg,Short,0.638,nen,1158,1124,1223,1193
+12_mouse_bite_08.jpg,Short,0.388,nen,1539,1081,1608,1143
+12_mouse_bite_08.jpg,Spurious Copper,0.310,nen,1680,1530,1764,1613
+12_mouse_bite_09.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_mouse_bite_09.jpg,Short,0.394,nen,1539,1081,1608,1144
+12_mouse_bite_09.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_mouse_bite_10.jpg,Short,0.633,nen,1158,1124,1223,1193
+12_mouse_bite_10.jpg,Short,0.399,nen,1539,1081,1608,1143
+12_mouse_bite_10.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_open_circuit_01.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_open_circuit_01.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_open_circuit_02.jpg,Short,0.636,nen,1158,1124,1223,1193
+12_open_circuit_02.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_open_circuit_02.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_open_circuit_03.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_open_circuit_03.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_open_circuit_03.jpg,Spurious Copper,0.314,nen,1680,1530,1764,1613
+12_open_circuit_04.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_open_circuit_04.jpg,Short,0.392,nen,1539,1081,1608,1143
+12_open_circuit_04.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_open_circuit_05.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_open_circuit_05.jpg,Short,0.411,nen,1539,1081,1608,1143
+12_open_circuit_05.jpg,Spurious Copper,0.322,nen,1680,1530,1764,1613
+12_open_circuit_06.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_open_circuit_06.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_open_circuit_06.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_open_circuit_07.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_open_circuit_07.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_open_circuit_07.jpg,Spurious Copper,0.350,nen,1677,1531,1763,1612
+12_open_circuit_08.jpg,Short,0.628,nen,1158,1124,1223,1193
+12_open_circuit_08.jpg,Short,0.391,nen,1539,1081,1608,1143
+12_open_circuit_08.jpg,Spurious Copper,0.308,nen,1680,1530,1764,1613
+12_open_circuit_09.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_open_circuit_09.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_open_circuit_09.jpg,Spurious Copper,0.314,nen,1680,1530,1764,1613
+12_open_circuit_10.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_open_circuit_10.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_open_circuit_10.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_short_01.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_short_01.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_short_01.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_short_02.jpg,Short,0.454,nen,1157,1128,1222,1193
+12_short_02.jpg,Short,0.407,lech,1118,1094,1220,1187
+12_short_02.jpg,Short,0.380,nen,1539,1081,1608,1142
+12_short_02.jpg,Spurious Copper,0.276,nen,1680,1530,1764,1613
+12_short_03.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_short_03.jpg,Short,0.386,nen,1539,1081,1608,1143
+12_short_03.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_short_04.jpg,Short,0.639,nen,1158,1124,1223,1193
+12_short_04.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_short_04.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_short_05.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_short_05.jpg,Short,0.384,nen,1539,1081,1608,1143
+12_short_06.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_short_06.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_short_06.jpg,Spurious Copper,0.330,nen,1680,1530,1764,1613
+12_short_07.jpg,Short,0.631,nen,1158,1124,1223,1193
+12_short_07.jpg,Short,0.377,nen,1539,1081,1608,1143
+12_short_07.jpg,Spurious Copper,0.322,nen,1680,1530,1764,1613
+12_short_08.jpg,Short,0.502,nen,1159,1124,1222,1192
+12_short_08.jpg,Short,0.385,nen,1539,1081,1608,1143
+12_short_08.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_short_09.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_short_09.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_short_09.jpg,Spurious Copper,0.358,nen,1677,1531,1763,1612
+12_short_10.jpg,Short,0.627,nen,1158,1124,1223,1193
+12_short_10.jpg,Short,0.382,nen,1539,1081,1608,1143
+12_spur_01.jpg,Short,0.639,nen,1158,1124,1223,1193
+12_spur_01.jpg,Short,0.393,nen,1539,1081,1608,1143
+12_spur_01.jpg,Spurious Copper,0.299,nen,1680,1530,1764,1613
+12_spur_02.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_spur_02.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_spur_03.jpg,Short,0.633,nen,1158,1124,1223,1193
+12_spur_03.jpg,Short,0.391,nen,1539,1081,1608,1143
+12_spur_03.jpg,Spurious Copper,0.327,nen,1680,1530,1764,1613
+12_spur_04.jpg,Short,0.625,nen,1158,1124,1223,1193
+12_spur_04.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_spur_04.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_spur_05.jpg,Short,0.639,nen,1158,1124,1223,1193
+12_spur_05.jpg,Short,0.396,nen,1539,1081,1608,1143
+12_spur_06.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_spur_06.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_spur_06.jpg,Spurious Copper,0.344,nen,1679,1529,1763,1613
+12_spur_07.jpg,Short,0.645,nen,1158,1124,1223,1193
+12_spur_07.jpg,Short,0.416,nen,1539,1080,1608,1143
+12_spur_07.jpg,Spurious Copper,0.290,nen,1680,1530,1764,1613
+12_spur_08.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_spur_08.jpg,Short,0.392,nen,1539,1081,1608,1143
+12_spur_08.jpg,Spurious Copper,0.314,nen,1680,1530,1764,1613
+12_spur_09.jpg,Short,0.638,nen,1158,1124,1223,1193
+12_spur_09.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_spur_09.jpg,Spurious Copper,0.300,nen,1680,1530,1764,1613
+12_spur_10.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_spur_10.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_spur_10.jpg,Spurious Copper,0.329,nen,1679,1530,1764,1613
+12_spurious_copper_01.jpg,Short,0.635,nen,1158,1124,1223,1193
+12_spurious_copper_01.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_spurious_copper_01.jpg,Spurious Copper,0.332,nen,1680,1530,1764,1613
+12_spurious_copper_02.jpg,Short,0.633,nen,1158,1124,1223,1193
+12_spurious_copper_02.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_spurious_copper_02.jpg,Spurious Copper,0.315,nen,1680,1530,1764,1613
+12_spurious_copper_03.jpg,Short,0.633,nen,1158,1124,1223,1193
+12_spurious_copper_03.jpg,Short,0.389,nen,1539,1081,1608,1143
+12_spurious_copper_03.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_spurious_copper_04.jpg,Spurious Copper,0.780,lech,441,1079,518,1112
+12_spurious_copper_04.jpg,Short,0.647,nen,1157,1124,1223,1193
+12_spurious_copper_04.jpg,Short,0.397,nen,1539,1081,1608,1143
+12_spurious_copper_04.jpg,Spurious Copper,0.313,nen,1680,1530,1764,1613
+12_spurious_copper_05.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_spurious_copper_05.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_spurious_copper_05.jpg,Spurious Copper,0.281,nen,1680,1530,1764,1613
+12_spurious_copper_06.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_spurious_copper_06.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_spurious_copper_07.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_spurious_copper_07.jpg,Short,0.387,nen,1539,1081,1608,1143
+12_spurious_copper_08.jpg,Short,0.632,nen,1158,1124,1223,1193
+12_spurious_copper_08.jpg,Spurious Copper,0.503,nen,2098,199,2143,267
+12_spurious_copper_08.jpg,Short,0.388,nen,1539,1081,1608,1143
+12_spurious_copper_08.jpg,Spurious Copper,0.340,nen,1680,1530,1764,1613
+12_spurious_copper_09.jpg,Spurious Copper,0.772,nen,1060,1214,1104,1293
+12_spurious_copper_09.jpg,Short,0.621,nen,1158,1124,1223,1193
+12_spurious_copper_09.jpg,Short,0.390,nen,1539,1081,1608,1143
+12_spurious_copper_09.jpg,Spurious Copper,0.324,nen,1680,1530,1764,1613
+12_spurious_copper_10.jpg,Short,0.634,nen,1158,1124,1223,1193
+12_spurious_copper_10.jpg,Short,0.387,nen,1539,1081,1608,1142
+12_spurious_copper_10.jpg,Spurious Copper,0.341,nen,1679,1530,1764,1613

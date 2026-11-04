@@ -1,0 +1,7 @@
+class,nho_gt,nho_missed,vua_gt,vua_missed,lon_gt,lon_missed
+Missing Hole,35,1,51,1,15,0
+Mouse Bite,45,2,45,1,10,0
+Open Circuit,97,2,3,0,0,0
+Short,9,0,33,0,57,0
+Spur,5,1,37,4,59,8
+Spurious Copper,9,0,32,1,59,1
