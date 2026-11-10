@@ -6,7 +6,7 @@
 ![VS Code](https://img.shields.io/badge/VS%20Code-Editor-007ACC?logo=visualstudiocode&logoColor=white)
 
 # PCB-Defect-Detection
-A computer vision project detecting defects in printed circuit boards (PCBs) using basic vision techniques and yolo8n
+A computer vision project detecting defects in printed circuit boards (PCBs) using classical image processing (SIFT alignment + XOR) and YOLOv8s
 
 ## Note
 
@@ -22,7 +22,7 @@ We also found a dataset in another repository that is relevant to our research t
 ## Features
 
 - Automatic PCB defect detection
-- YOLOv8n object detection model
+- YOLOv8s object detection model (board-level train/val/test split)
 - Multiple defect classification
 - Bounding box visualization
 - Confidence score prediction
@@ -47,8 +47,8 @@ The model detects six PCB defects:
 The recorded environment is Python 3.14.6 with PyTorch 2.14.1+cu126 and Ultralytics 8.4.194. The requirements file pins the two versions supplied for that environment; it is not a complete `pip freeze` export because the full package list from that machine is not available here.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/PCB-Defect-Detection.git
-cd PCB-Defect-Detection
+git clone https://github.com/guidy2k6/pcb-defect-detection.git
+cd pcb-defect-detection
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -137,6 +137,14 @@ yolo predict \
 
 Annotated predictions are saved under `output/pcb_v8s_board/`. Use `device=cpu` on a machine without a compatible NVIDIA GPU.
 
+To use the Gradio web demo, put `best.pt` in `models/` (or set `HF_MODEL_REPO`, see above) and run:
+
+```bash
+python demo/app.py
+```
+
+Upload a defective PCB image for single-stage YOLOv8s detection. Optionally upload a defect-free template image as well to run the SIFT + XOR pipeline, which also needs `models/best_cls.pt`.
+
 ## Some results
 
 Validation results below are from the recorded experiments in `results/summary.csv`. The board split keeps boards separate across train, validation, and test; the random split is shown as a comparison.
@@ -145,10 +153,10 @@ Validation results below are from the recorded experiments in `results/summary.c
 |---|---|---:|---:|---:|---:|---:|
 | `pcb_v8n_random` | Random | 0.9702 | 0.9333 | 0.9668 | 0.5293 | 13.60 |
 | `pcb_v8s` | Random | 0.9728 | 0.9473 | 0.9672 | 0.5437 | 24.90 |
-| `pcb_v8n_board` | Board | 0.9728 | 0.9165 | 0.9722 | 0.5195 | 15.90 |
-| `pcb_v8s_board` | Board | 0.9752 | 0.9582 | 0.9782 | 0.5507 | 28.84 |
+| `pcb_v8n_board` | Board | 0.9728 | 0.9165 | 0.9722 | 0.5195 | 13.33 |
+| `pcb_v8s_board` | Board | 0.9752 | 0.9582 | 0.9782 | 0.5507 | 24.19 |
 
-The selected `pcb_v8s_board` checkpoint was evaluated once on the held-out test split (120 images, 601 objects): P 0.8543, R 0.9336, mAP50 0.9720, and mAP50-95 0.5162 at 31.91 ms/image. Test metrics are in `results/test_metrics.csv`; per-class results are in `results/pcb_v8s_board_test/metrics_per_class.csv`. On test, Mouse Bite and Short had lower precision (0.6272 and 0.6130), while Open Circuit had lower recall (0.7138).
+The selected `pcb_v8s_board` checkpoint was evaluated once on the held-out test split (120 images, 601 objects): P 0.8543, R 0.9336, mAP50 0.9720, and mAP50-95 0.5162 at 25.71 ms/image. Test metrics are in `results/test_metrics.csv`; per-class results are in `results/pcb_v8s_board_test/metrics_per_class.csv`. On test, Mouse Bite and Short had lower precision (0.6272 and 0.6130), while Open Circuit had lower recall (0.7138).
 
 ![Normalized confusion matrix for the board-split test evaluation](results/pcb_v8s_board_test/confusion_matrix_normalized.png)
 
