@@ -3,18 +3,28 @@
   - Tai them anh mau (khong loi)   -> can chinh SIFT + XOR + phan loai, models/best_cls.pt (hai giai doan, theo bai bao)
     python demo/app.py
 """
+import os
 import sys
 from pathlib import Path
 
 import cv2
 import gradio as gr
+from huggingface_hub import hf_hub_download
 from ultralytics import YOLO
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "tools"))
 from pipeline import classify_boxes, draw, xor_detect  # noqa: E402
 
-yolo = YOLO(str(REPO / "models" / "best.pt"))
+model_repo = os.getenv("HF_MODEL_REPO")
+if model_repo:
+    model_path = hf_hub_download(repo_id=model_repo, filename="best.pt")
+else:
+    model_path = REPO / "models" / "best.pt"
+    if not model_path.is_file():
+        raise RuntimeError("Set HF_MODEL_REPO to a Hugging Face model repo containing best.pt.")
+
+yolo = YOLO(str(model_path))
 cls_path = REPO / "models" / "best_cls.pt"
 cls = YOLO(str(cls_path)) if cls_path.exists() else None
 

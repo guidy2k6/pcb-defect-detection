@@ -104,6 +104,23 @@ python tools/eval.py \
 
 Per-class metrics and plots are written under `results/pcb_v8s_board_val/`. The held-out test set should be evaluated only for final reporting. This script refuses to overwrite an existing `results/test_metrics.csv`; pass `--split test --force` only when intentionally rerunning the test evaluation.
 
+## Store weights on Hugging Face
+
+Keep trained `.pt` checkpoints in a Hugging Face model repository rather than GitHub. Authenticate first; `hf upload` creates the model repository if it does not exist yet:
+
+```bash
+hf auth login
+hf upload your-hf-username/pcb-defect-detection models/best.pt best.pt --private
+```
+
+The command creates a private repository if needed. Use `--no-private` to create a public repository instead. The demo downloads `best.pt` from the repository specified by `HF_MODEL_REPO`:
+
+```bash
+HF_MODEL_REPO=your-hf-username/pcb-defect-detection python demo/app.py
+```
+
+Install the requirements first. If `HF_MODEL_REPO` is not set, the demo falls back to `models/best.pt` for local development. Local `.pt` checkpoint files are ignored by Git.
+
 ## Demo
 
 Put one or more supported image files in `input/`, then run prediction with the trained checkpoint:

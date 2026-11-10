@@ -223,7 +223,6 @@ dataset/
 PCB_DATASET/
 runs/
 *.pt
-!models/best.pt
 *.mp4
 *.zip
 
