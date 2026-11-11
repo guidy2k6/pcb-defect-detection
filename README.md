@@ -156,7 +156,7 @@ Validation results below are from the recorded experiments in `results/summary.c
 | `pcb_v8n_board` | Board | 0.9728 | 0.9165 | 0.9722 | 0.5195 | 13.33 |
 | `pcb_v8s_board` | Board | 0.9752 | 0.9582 | 0.9782 | 0.5507 | 24.19 |
 
-The selected `pcb_v8s_board` checkpoint was evaluated once on the held-out test split (120 images, 601 objects): P 0.8543, R 0.9336, mAP50 0.9720, and mAP50-95 0.5162 at 25.71 ms/image. Test metrics are in `results/test_metrics.csv`; per-class results are in `results/pcb_v8s_board_test/metrics_per_class.csv`. On test, Mouse Bite and Short had lower precision (0.6272 and 0.6130), while Open Circuit had lower recall (0.7138).
+The selected `pcb_v8s_board` checkpoint was evaluated once on the held-out test split (120 images, 601 objects): P 0.8543, R 0.9336, mAP50 0.9720, and mAP50-95 0.5162 at 25.71 ms/image. Test metrics are in `results/test_metrics.csv`; per-class results are in `results/pcb_v8s_board_test/metrics_per_class.csv`. On test, the extra boxes come mainly from Missing Hole and Short (119 and 123 false positives at conf 0.25, see section 6 of the report).
 
 ![Normalized confusion matrix for the board-split test evaluation](results/pcb_v8s_board_test/confusion_matrix_normalized.png)
 

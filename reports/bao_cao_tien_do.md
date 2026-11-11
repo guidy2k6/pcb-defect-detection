@@ -1,218 +1,206 @@
-# Báo cáo tiến độ và kế hoạch đề tài
+# Báo cáo tiến độ và kết quả đề tài
 
 **Đề tài:** Phát hiện và phân loại lỗi trên bảng mạch in PCB  
-**Ngày cập nhật:** 10/11/2026  
-**Trạng thái:** Đã có dữ liệu chia theo bo, các kết quả YOLO trên validation/test, phân tích lỗi và thử nghiệm pipeline XOR.
+**Ngày cập nhật:** 11/11/2026  
+**Trạng thái:** Đã có dữ liệu chia theo bo, kết quả YOLO trên validation và test, phân tích lỗi (gồm 307 dương tính giả trên test), ngưỡng tin cậy theo lớp, pipeline XOR và demo.
 
 ## 1. Tổng quan
 
-### 1.1. Hiện trạng và các vấn đề cần lưu ý
+### 1.1. Dữ liệu và cách đánh giá
 
-Dự án nhận diện sáu loại lỗi: Missing Hole, Mouse Bite, Open Circuit, Short, Spur và Spurious Copper. Theo manifest và nhật ký hiện tại, dữ liệu được chia theo bo thành 453 ảnh train, 120 ảnh validation, 120 ảnh test; số box lần lượt là 1749, 603 và 601. Có 10 ID bo trong split, phân chia 6/2/2. Cách chia này nhằm tránh cùng một bo xuất hiện đồng thời ở train và validation/test.
+Dự án nhận diện sáu loại lỗi: Missing Hole, Mouse Bite, Open Circuit, Short, Spur và Spurious Copper. Dữ liệu được chia theo ID bo thành 453 ảnh train, 120 ảnh validation và 120 ảnh test (1749, 603 và 601 box). Có 10 bo, chia 6/2/2: validation là bo 07 và 11, test là bo 08 và 12. Mỗi bo nằm trọn trong một tập để tránh cùng một bo xuất hiện ở cả huấn luyện và đánh giá.
 
 Các điểm cần trình bày chính xác:
 
-1. **Nguồn dữ liệu:** quy trình trong repo đọc bộ PCB gốc có `images/`, `Annotations/` và `PCB_USED/`. Không nên ghi nhóm dùng bộ VOC_PCB 10.668 ảnh nếu thực tế dùng bộ gốc.
-2. **Đã có test độc lập:** `configs/board_split.json` chỉ định các bo test; `results/test_metrics.csv` hiện có kết quả YOLOv8s board trên test. Nhật ký ghi nhận test đã được đánh giá và có một lần chạy lại bằng `--force` sau khi sửa tên lớp; số tổng không đổi. Vì vậy cần mô tả đúng lịch sử, không nói test chỉ chạy đúng một lần tuyệt đối.
-3. **Rò rỉ theo bo:** split được thực hiện theo ID bo thay vì chia ngẫu nhiên theo ảnh. `results/data_audit.csv` là báo cáo audit lưu trong repo; cần kiểm tra báo cáo này khi trình bày kết luận về leakage.
-4. **Có các mốc so sánh:** repo lưu kết quả YOLOv8n và YOLOv8s, cách chia ngẫu nhiên và theo bo, thêm một thí nghiệm imgsz 640 cùng baseline XOR. Các phương pháp khác nhau cần được so sánh bằng metric phù hợp, không nên xem F1 của XOR và mAP của YOLO là cùng một đại lượng.
+1. **Nguồn dữ liệu:** quy trình đọc bộ PCB gốc có `images/`, `Annotations/` và `PCB_USED/` (ảnh bo mẫu không lỗi).
+2. **Lịch sử đánh giá test:** `results/test_metrics.csv` có kết quả YOLOv8s board trên test. Test được chạy lại một lần bằng `--force` sau khi sửa tên lớp, số tổng không đổi. Sau đó test được dùng để phân tích lỗi (`analyze_errors.py`). Mô hình và ngưỡng đều được chọn trên validation, không chọn theo test.
+3. **Rò rỉ theo bo:** split theo ID bo thay vì ngẫu nhiên theo ảnh; báo cáo audit nằm ở `results/data_audit.csv`.
+4. **Các mốc so sánh:** YOLOv8n và YOLOv8s, chia ngẫu nhiên và theo bo, imgsz 640, và baseline XOR. YOLO và XOR được đo bằng metric khác nhau nên không so trực tiếp mAP với F1.
 
 ### 1.2. Sản phẩm và tình trạng
 
-| Hạng mục | Tình trạng theo workspace hiện tại |
+| Hạng mục | Tình trạng |
 |---|---|
-| Mã nguồn và hướng dẫn chạy | Có `README.md`, `requirements.txt`, `configs/`, `data/io/`, `tools/`, `demo/` |
-| Dataset YOLO đã chuyển đổi | Không có trong workspace hiện tại; `dataset/` chỉ chứa `.gitkeep` |
-| Weights huấn luyện | Không thấy thư mục `runs/` có trong workspace; weights cần có lại để chạy inference/eval từ đầu |
-| Kết quả đánh giá và phân tích | Có nhiều CSV, biểu đồ và ảnh trong `results/` |
-| Demo | Có `demo/app.py`; demo cần weights cục bộ hoặc cấu hình Hugging Face |
-| Slide và báo cáo đầy đủ | Báo cáo tiến độ này được lưu trong `reports/`; không xác nhận có slide trong workspace hiện tại |
+| Mã nguồn và hướng dẫn chạy | `README.md`, `requirements.txt`, `configs/`, `data/io/`, `tools/`, `demo/`, `tests/` |
+| Dataset YOLO đã chuyển đổi | Không lưu trong git; tạo lại từ bộ gốc bằng `data/io/divide_data.py` |
+| Weights | Không lưu trong git (`*.pt` bị chặn); lưu trên Hugging Face, demo tải qua `HF_MODEL_REPO` |
+| Kết quả và phân tích | CSV, biểu đồ và ảnh trong `results/`; bảng tự sinh ở `reports/bang_so_lieu.md` |
+| Demo | `demo/app.py` (Gradio): YOLO một ảnh, và tùy chọn so với ảnh mẫu (SIFT + XOR) |
 
-### 1.3. Đối chiếu hướng nghiên cứu và cách triển khai
+### 1.3. Hai hướng triển khai
 
-Đề tài triển khai hai hướng. Hướng theo quy trình ảnh mẫu gồm căn chỉnh ảnh lỗi với ảnh PCB chuẩn, chuyển xám/nhị phân, XOR, lọc vùng khác biệt và phân loại vùng lỗi. Hướng YOLO là detector một giai đoạn để làm mốc so sánh và đề xuất bổ sung.
-
-Repo hiện có `tools/baseline_xor.py`, `tools/pipeline.py` và `tools/eval_pipeline.py` cho hướng ảnh mẫu; YOLO dùng `tools/train.py`, `tools/eval.py` và `tools/analyze_errors.py`. Đây là cấu trúc thực tế hiện có. Một số tên trong kế hoạch ban đầu, như `tools/inference.py`, không có trong repo; chức năng demo hiện nằm ở `demo/app.py`.
+Hướng ảnh mẫu: căn chỉnh ảnh lỗi với ảnh PCB chuẩn, nhị phân hóa, XOR, lọc vùng khác biệt và phân loại vùng lỗi (`tools/baseline_xor.py`, `tools/pipeline.py`, `tools/eval_pipeline.py`). Hướng YOLO: detector một giai đoạn (`tools/train.py`, `tools/eval.py`, `tools/analyze_errors.py`), dùng làm mốc so sánh và đề xuất bổ sung.
 
 ### 1.4. Quy trình xử lý và file tương ứng
 
 | Khối công việc | Thực hiện trong repo | Đầu ra chính |
 |---|---|---|
-| Đọc XML, chuyển VOC sang YOLO, chia theo bo | `data/io/divide_data.py`, gọi `convert_voc_to_yolo.py` và `check_xml.py` | `dataset/pcb_boards_yolo/`, `configs/data_board.yaml`, `configs/board_split.json`, `results/data_audit.csv` |
-| Huấn luyện detector | `tools/train.py` | `runs/detect/<run>/weights/best.pt`, `last.pt`, `args.yaml`, log và biểu đồ; ghi thông số vào `configs/train_params.md` |
-| Sửa tên lớp trong weights khi cần | `tools/fix_class_names.py` | Weights mới tại đường dẫn đích, không train lại |
-| Đánh giá detector | `tools/eval.py` | `results/<run>_<split>/metrics_per_class.csv`, `speed.txt`, biểu đồ; test tổng hợp ở `results/test_metrics.csv` |
-| Phân tích lỗi | `tools/analyze_errors.py` | Các CSV dưới `results/<run>_<split>_errors/` |
-| Tạo ảnh ví dụ lỗi | `tools/error_examples.py` | Ảnh dưới `results/error_examples/` theo nhóm lỗi |
+| Đọc XML, chuyển VOC sang YOLO, chia theo bo | `data/io/divide_data.py` (gọi `convert_voc_to_yolo.py`, `check_xml.py`) | `dataset/pcb_boards_yolo/`, `configs/data_board.yaml`, `configs/board_split.json`, `results/data_audit.csv` |
+| Huấn luyện detector | `tools/train.py` | `runs/detect/<run>/weights/`, ghi thông số vào `configs/train_params.md` |
+| Sửa tên lớp trong weights | `tools/fix_class_names.py` | Weights mới, không train lại |
+| Đánh giá detector | `tools/eval.py` | `results/<run>_<split>/`, `results/test_metrics.csv` |
+| Phân tích lỗi | `tools/analyze_errors.py` | `results/<run>_<split>_errors/` |
+| Chọn ngưỡng tin cậy theo lớp (val) | `tools/select_thresholds.py` | `configs/thresholds.json` |
+| Cắt vùng dương tính giả để xem | `tools/crop_hotspot_v2.py` | `results/hotspot2_<bo>_<x>_<y>.png` |
+| Bảng số liệu tự sinh | `tools/make_report_tables.py` | `reports/bang_so_lieu.md` |
 | Tổng hợp các lần eval | `tools/build_summary.py` | `results/summary.csv` |
-| Cắt ảnh cho classifier | `data/io/collect_crops.py` | `dataset/cls/{train,val,test}/<class>/*.png` |
-| Huấn luyện classifier crop | `tools/train_cls.py` | `runs/classify/<run>/weights/` và kết quả trong `results/` nếu bật đánh giá |
-| Đánh giá XOR | `tools/eval_pipeline.py` gọi `tools/pipeline.py` và `tools/baseline_xor.py` | `results/pipeline_<split>.csv`, tùy chọn sweep, overlay và CSV phân loại |
-
-`tools/yolo_utils.py` và `tools/crop_utils.py` là module dùng chung, không chạy độc lập. `tools/eval_baseline.py` đánh giá riêng baseline XOR và có thể ghi `results/baseline_test.csv`.
+| Classifier crop | `data/io/collect_crops.py`, `tools/train_cls.py` | `dataset/cls/`, `results/pcb_cls_board*` |
+| Đánh giá XOR | `tools/eval_pipeline.py` | `results/pipeline_<split>.csv` |
 
 ### 1.5. Nguyên tắc báo cáo kết quả
 
-- Mỗi số liệu cần truy được về một file dưới `results/` hoặc nhật ký `configs/train_params.md`.
-- Chọn mô hình và tham số bằng validation; test chỉ dùng báo cáo cuối. Lịch sử chạy lại test cần được nêu minh bạch.
-- Ghi tham số mỗi lần chạy; khi so sánh, chỉ thay đổi một yếu tố nếu mục tiêu là đo tác động của yếu tố đó.
-- Tách rõ kết quả crop-classifier trên box nhãn thật khỏi kết quả end-to-end có bước tìm box.
-- Không so sánh trực tiếp mAP YOLO với F1 XOR như cùng metric; cần báo rõ IoU và cách ghép box.
+- Mỗi số liệu truy được về một file dưới `results/` hoặc nhật ký `configs/train_params.md`.
+- Chọn mô hình và tham số (kể cả ngưỡng tin cậy) bằng validation; test chỉ dùng báo cáo.
+- Tách rõ kết quả crop-classifier trên box nhãn thật khỏi kết quả end-to-end.
+- Ghi rõ cách tính: P, R "gộp" là tính trên tất cả box; P, R của Ultralytics là trung bình theo lớp. Hai cách cho số khác nhau, đặc biệt trên test.
 
-## 2. Kho mã và hướng dẫn chạy
-
-### 2.1. Cấu trúc repo hiện tại
+## 2. Kho mã và cách chạy
 
 ```text
-configs/       cấu hình dữ liệu, manifest chia bo, nhật ký train
+configs/       cấu hình dữ liệu, manifest chia bo, nhật ký train, thresholds.json
 data/io/       kiểm tra dữ liệu, chuyển VOC, chia split, tạo crop
-tools/         train, eval, phân tích lỗi, pipeline XOR và tiện ích
-dataset/       nơi lưu ảnh/nhãn đã chuẩn bị; không có dữ liệu trong workspace hiện tại
-models/        nơi đặt weights dùng cho demo
-input/         ảnh đầu vào demo dòng lệnh
-output/        kết quả demo/baseline
-results/       CSV, biểu đồ, ảnh và báo cáo metric
+tools/         train, eval, phân tích lỗi, ngưỡng, pipeline XOR, tiện ích
+demo/          giao diện Gradio, service, ví dụ
+tests/         kiểm thử cho demo
+results/       CSV, biểu đồ, ảnh và bảng metric
 reports/       báo cáo dự án
-demo/app.py    giao diện Gradio
 ```
 
-### 2.2. Trình tự chạy detector từ đầu
-
-Từ thư mục gốc repo, cài dependencies theo `requirements.txt`, rồi chuẩn bị dataset gốc. Sau đó chạy:
+Từ thư mục gốc repo, cài dependencies theo `requirements.txt` và chuẩn bị bộ dữ liệu gốc, rồi:
 
 ```bash
 python data/io/divide_data.py --source PCB_DATASET --output dataset/pcb_boards_yolo --config configs/data_board.yaml --manifest configs/board_split.json
 python tools/train.py --name pcb_v8s_board --model yolov8s.pt --data configs/data_board.yaml --imgsz 1024 --batch 8 --epochs 100 --patience 30 --workers 0 --seed 0 --device 0
 python tools/eval.py --weights runs/detect/pcb_v8s_board/weights/best.pt --data configs/data_board.yaml --split val --name pcb_v8s_board --imgsz 1024 --batch 8 --device 0
-python tools/analyze_errors.py --weights runs/detect/pcb_v8s_board/weights/best.pt --data configs/data_board.yaml --split val --name pcb_v8s_board --imgsz 1024 --device cpu
+python tools/analyze_errors.py --weights models/best.pt --data configs/data_board.yaml --split val --conf 0.25 --device cpu --name val_conf_0.25
+python tools/select_thresholds.py
+python tools/analyze_errors.py --weights models/best.pt --data configs/data_board.yaml --split test --thresholds configs/thresholds.json --device cpu --name test_per_class
+python tools/make_report_tables.py
 ```
 
-Chỉ sau khi chốt mô hình trên validation mới đánh giá test bằng `tools/eval.py --split test`. Nếu không có GPU phù hợp, thay `--device 0` bằng `--device cpu`. Lệnh demo theo README là `yolo predict ...`; giao diện Gradio chạy bằng `python demo/app.py` khi đã có weights.
+Chạy `analyze_errors.py` với `--conf 0.4`, `0.5`, `0.6` (tên `val_conf_0.4`, ...) trước `select_thresholds.py`. Chỉ đánh giá test sau khi chốt mô hình và ngưỡng trên validation. Demo: `python demo/app.py` (cần `models/best.pt` hoặc `HF_MODEL_REPO`). Quy ước Git: mỗi thành viên làm trên nhánh riêng, push và mở pull request; không commit dataset, `runs/` hay `*.pt`.
 
-### 2.3. Cộng tác Git
-
-Quy ước trong kế hoạch là mỗi thành viên làm trên nhánh riêng, commit theo từng phần, push và mở pull request để xem lại trước khi merge. Không commit dataset lớn, thư mục `runs/`, token hoặc secrets. Giữ đường dẫn tương đối trong YAML/code để repo có thể chạy trên máy khác. Trước khi làm theo hướng dẫn này, nhóm cần xác nhận repo remote, quyền truy cập và `.gitignore` thực tế.
-
-### 2.4. Quy ước kết quả
-
-Tên run cần thể hiện mô hình/cách chia; log tham số ghi ở `configs/train_params.md`. File kết quả CSV và hình cần gắn với split cụ thể (`val` hoặc `test`) để người đọc không nhầm số liệu. Không ghi đè `results/test_metrics.csv` nếu không chủ ý chạy lại test.
-
-## 3. Tiến trình thực hiện
-
-### 3.1. Các thí nghiệm đã ghi nhận
-
-Nhật ký `configs/train_params.md` và `results/summary.csv` ghi nhận các run chính sau:
+## 3. Các thí nghiệm
 
 | Run | Cách chia | Mô hình | Kích thước ảnh | Kết quả/ghi chú |
 |---|---|---|---:|---|
-| `pcb_v8n_random` | Ngẫu nhiên | YOLOv8n | 1024 | Validation: P 0,9702; R 0,9333; mAP50 0,9668; mAP50-95 0,5293 |
-| `pcb_v8s` | Ngẫu nhiên | YOLOv8s | 1024 | Validation: P 0,9728; R 0,9473; mAP50 0,9672; mAP50-95 0,5437 |
-| `pcb_v8n_board` | Theo bo | YOLOv8n | 1024 | Validation: P 0,9728; R 0,9165; mAP50 0,9722; mAP50-95 0,5195 |
-| `pcb_v8s_board` | Theo bo | YOLOv8s | 1024 | Chọn làm detector chính; có validation và test |
-| `pcb_best_640` | Theo bo | YOLOv8s | 640 | Validation: P 0,9864; R 0,8945; mAP50 0,9552; mAP50-95 0,4963 |
-| `pcb_cls_board` | Theo bo | YOLOv8n-cls | 128 | Classifier crop; nhật ký ghi top-1 val 1,000, test 0,990 |
+| `pcb_v8n_random` | Ngẫu nhiên | YOLOv8n | 1024 | Val: P 0,9702; R 0,9333; mAP50 0,9668; mAP50-95 0,5293 |
+| `pcb_v8s` | Ngẫu nhiên | YOLOv8s | 1024 | Val: P 0,9728; R 0,9473; mAP50 0,9672; mAP50-95 0,5437 |
+| `pcb_v8n_board` | Theo bo | YOLOv8n | 1024 | Val: P 0,9728; R 0,9165; mAP50 0,9722; mAP50-95 0,5195 |
+| `pcb_v8s_board` | Theo bo | YOLOv8s | 1024 | Detector chính; có val và test |
+| `pcb_best_640` | Theo bo | YOLOv8s | 640 | Val: P 0,9864; R 0,8945; mAP50 0,9552; mAP50-95 0,4963 |
+| `pcb_cls_board` | Theo bo | YOLOv8n-cls | 128 | Classifier crop: top-1 val 1,000, test 0,990 (trên box nhãn thật) |
 
-Các ngày chạy ghi trong nhật ký là 31/10/2026 và 02/11/2026; sửa tên lớp được ghi ngày 03/11/2026. Đây là ngày có trong log repo, khác với lịch dự kiến 15–28/10 trong kế hoạch ban đầu.
+Các lần chạy ghi trong nhật ký ngày 31/10/2026 và 02/11/2026; sửa tên lớp ngày 03/11/2026. Chọn `pcb_v8s_board` dựa trên val theo bo: mAP50-95 0,551 so với 0,519 của v8n, bỏ sót 11 so với 26, đổi lại chậm hơn (24,2 so với 13,3 ms/ảnh). Val chỉ có 2 bo và một seed nên chênh lệch chỉ là gợi ý.
 
-### 3.2. Phân tích lỗi detector
+## 4. Phương pháp
 
-`tools/analyze_errors.py` ghép box dự đoán với nhãn thật theo IoU (mặc định 0,5), rồi phân loại thành đúng, nhầm lớp, bỏ sót hoặc dự đoán thừa. Với YOLOv8s board trên validation: 603 box nhãn gồm 589 đúng, 3 nhầm lớp, 11 bỏ sót; có 20 dự đoán thừa. Kết quả được lưu trong `results/pcb_v8s_board_val_errors/`.
+**Tiền xử lý.** `data/io/convert_voc_to_yolo.py` đọc tên lớp và tọa độ box từ XML Pascal VOC, giới hạn trong kích thước ảnh và chuyển sang `class_id x_center y_center width height` chuẩn hóa. ID bo lấy từ phần tên ảnh trước dấu gạch dưới; ảnh của cùng một bo vào trọn một tập. Crop cho classifier: vùng vuông quanh lỗi, lề 50%, 128×128, giữ nguyên split theo bo.
 
-### 3.3. Pipeline XOR và classifier
+**Huấn luyện.** YOLOv8s khởi tạo từ `yolov8s.pt`, `imgsz=1024`, `batch=8`, tối đa 100 epochs, `patience=30`, `seed=0`. Nhãn lớp trong weights từng bị hoán vị so với file nhãn; đã sửa metadata bằng `tools/fix_class_names.py`, không đổi trọng số.
 
-Tham số XOR được chọn trên validation: `close=27`, `min_area=250`, `grow=2.0`. Biến thể `new` đạt F1 0,6178 trên val và 0,6376 trên test tại IoU 0,5. Classifier trên các box tìm đúng đạt 342/373 = 0,9169; đây không phải metric end-to-end. Classifier crop huấn luyện riêng đạt top-1 0,990 trên test theo nhật ký, nhưng dùng crop theo box thật.
+**Hướng XOR.** (1) Ghép ảnh lỗi với ảnh bo chuẩn theo ID bo; (2) căn chỉnh bằng SIFT, lọc tương ứng, homography/RANSAC; (3) nhị phân hóa rồi XOR; (4) loại vùng biên do warp, lọc nhiễu bằng median blur, closing/opening và connected components; (5) lọc theo diện tích, mở rộng box, rồi phân loại crop. Tham số chọn trên val: `close=27`, `min_area=250`, `grow=2.0`.
 
-## 4. Phương pháp đã thực hiện
-
-### 4.1. Tiền xử lý dữ liệu
-
-Dataset gốc gồm ảnh lỗi và annotation Pascal VOC dạng XML. Script `data/io/convert_voc_to_yolo.py`, được gọi bởi `data/io/divide_data.py`, đọc tên lớp và tọa độ box XML, giới hạn tọa độ trong kích thước ảnh, rồi chuyển mỗi box sang định dạng YOLO đã chuẩn hóa: `class_id x_center y_center width height`.
-
-ID bo được lấy từ phần tên ảnh trước dấu gạch dưới. Các ảnh và nhãn của cùng một bo được đưa trọn vào một split; manifest chia 6 bo train, 2 bo validation, 2 bo test. Quá trình tạo dữ liệu cũng ghi `configs/data_board.yaml`, cập nhật `configs/board_split.json` và tạo báo cáo kiểm tra `results/data_audit.csv`. Theo nhật ký, sau chuyển đổi có 453/120/120 ảnh và 1749/603/601 box tương ứng.
-
-Với thí nghiệm classifier, `data/io/collect_crops.py` đọc box YOLO, cắt vùng vuông quanh từng lỗi, thêm lề 50% và resize về 128×128. Crop giữ nguyên split theo bo của ảnh nguồn để tránh đưa crop cùng bo sang nhiều tập.
-
-### 4.2. Huấn luyện mô hình YOLO
-
-Detector chính được khởi tạo từ trọng số pretrained `yolov8s.pt` và huấn luyện với bộ dữ liệu chia theo bo. Cấu hình ghi trong `configs/train_params.md`: `imgsz=1024`, `batch=8`, tối đa 100 epochs, early stopping `patience=30`, `seed=0`, `workers=0`. Run chính là `pcb_v8s_board`; các run YOLOv8n, chia ngẫu nhiên và imgsz 640 là các mốc so sánh.
-
-`tools/train.py` gọi Ultralytics để train, lưu `best.pt`/`last.pt`, thông số và log dưới `runs/detect/<run>/`, đồng thời ghi thông tin lần chạy vào `configs/train_params.md`. Tên lớp trong weights đã được sửa metadata bằng `tools/fix_class_names.py` khi phát hiện không khớp thứ tự class ID; thao tác đó không thay đổi trọng số học được.
-
-### 4.3. Xử lý ảnh theo hướng XOR
-
-Pipeline ảnh mẫu được triển khai riêng với detector YOLO:
-
-1. Ghép ảnh lỗi với ảnh PCB chuẩn theo ID bo.
-2. Chuyển ảnh sang grayscale và tìm đặc trưng để căn chỉnh ảnh lỗi với ảnh chuẩn bằng SIFT, lọc tương ứng và homography/RANSAC.
-3. Nhị phân hóa ảnh rồi XOR hai ảnh để làm nổi vùng khác biệt.
-4. Loại vùng biên không hợp lệ do phép warp; áp dụng median blur, closing/opening và connected components để lọc nhiễu, nối vùng lỗi và lấy box.
-5. Lọc vùng theo diện tích, mở rộng box quanh vùng khác biệt; nếu có classifier thì cắt vùng box và dự đoán lớp.
-
-Logic xử lý nằm ở `tools/baseline_xor.py` và `tools/pipeline.py`; `tools/eval_pipeline.py` đánh giá hai biến thể. Tham số biến thể `new` được chọn trên validation (`close=27`, `min_area=250`, `grow=2.0`). Bộ phân loại crop được train riêng bằng `tools/train_cls.py`; kết quả phân loại crop nhãn thật là cận trên, còn đánh giá trên box XOR tìm được mới phản ánh một phần lỗi của toàn quy trình.
-
-### 4.4. Đánh giá và phân tích lỗi
-
-`tools/eval.py` tính precision, recall, AP theo lớp, mAP và thời gian suy luận trên val/test. Mô hình được chọn bằng validation; test được dùng để báo cáo. `tools/analyze_errors.py` ghép box dự đoán với box thật ở IoU 0,5 để thống kê phát hiện đúng, nhầm lớp, bỏ sót và false positive. `tools/error_examples.py` lưu ảnh minh họa lỗi; `tools/build_summary.py` gom các lần đánh giá thành `results/summary.csv`.
+**Đánh giá.** `tools/eval.py` tính precision, recall, AP theo lớp, mAP và thời gian suy luận. `tools/analyze_errors.py` ghép box dự đoán với nhãn thật ở IoU 0,5 và thống kê đúng, nhầm lớp, bỏ sót, dự đoán thừa.
 
 ## 5. Kết quả chính
 
 | Mô hình / phương pháp | Tập | Precision | Recall | mAP50 / F1 | mAP50-95 | Thời gian |
 |---|---|---:|---:|---:|---:|---:|
-| YOLOv8s board | Validation | 0,9752 | 0,9582 | mAP50 0,9782 | 0,5507 | 24,19 ms/ảnh |
-| YOLOv8s board | Test | 0,8543 | 0,9336 | mAP50 0,9720 | 0,5162 | 25,71 ms/ảnh |
+| YOLOv8s board (conf 0,25) | Validation | 0,9752 | 0,9582 | mAP50 0,9782 | 0,5507 | 24,19 ms/ảnh |
+| YOLOv8s board (conf 0,25) | Test | 0,8543 | 0,9336 | mAP50 0,9720 | 0,5162 | 25,71 ms/ảnh |
 | XOR cải tiến (`new`) | Validation, IoU 0,5 | 0,6204 | 0,6153 | F1 0,6178 | — | — |
 | XOR cải tiến (`new`) | Test, IoU 0,5 | 0,6555 | 0,6206 | F1 0,6376 | — | — |
 
-Trên validation, YOLOv8s board có 589 box đúng, 3 box khớp vị trí nhưng nhầm lớp, 11 box bỏ sót và 20 dự đoán thừa trên 603 nhãn. Bộ phân loại XOR trên các box tìm đúng đạt 342/373 = 0,9169; đây là accuracy có điều kiện, không phải metric end-to-end. Classifier crop riêng đạt top-1 0,990 trên test theo nhật ký, nhưng được đánh giá trên crop theo box nhãn thật.
+P, R của YOLO là trung bình theo lớp (Ultralytics). Theo lớp trên test:
 
-## 6. Kết luận, hạn chế và hướng tiếp theo
+| Lớp | Precision | Recall |
+|---|---:|---:|
+| Missing Hole | 0,6272 | 0,9802 |
+| Mouse Bite | 0,9509 | 0,9678 |
+| Open Circuit | 0,9834 | 0,9600 |
+| Short | 0,6130 | 0,9899 |
+| Spur | 1,0000 | 0,7138 |
+| Spurious Copper | 0,9514 | 0,9900 |
 
-Đã tiền xử lý dữ liệu bằng cách chuyển nhãn VOC sang YOLO, chuẩn hóa tọa độ box và chia dữ liệu theo ID bo theo tỷ lệ 6/2/2. Detector YOLOv8s được fine-tune từ weights pretrained ở kích thước ảnh 1024, batch 8, tối đa 100 epochs và early stopping. Trên validation, mô hình đạt mAP50 0,9782 và mAP50-95 0,5507; trên test đạt mAP50 0,9720 và mAP50-95 0,5162.
+Trên validation, YOLOv8s board có 589 box đúng, 3 nhầm lớp, 11 bỏ sót và 20 dự đoán thừa trên 603 nhãn. Bộ phân loại trên box XOR tìm đúng đạt 342/373 = 0,9169 (accuracy có điều kiện). Classifier crop top-1 0,990 trên test được đo trên crop theo box thật nên là cận trên.
 
-Song song, đã triển khai xử lý ảnh theo hướng ảnh mẫu: căn chỉnh, grayscale, nhị phân hóa, XOR, lọc hình thái học và gom vùng thành box; classifier được dùng để gán lớp cho crop. Pipeline XOR cải tiến đạt F1 0,6376 trên test tại IoU 0,5. Kết quả này thấp hơn detector theo các metric báo cáo, nhưng hai hướng có quy trình và cách đo khác nhau.
+## 6. Phân tích dương tính giả trên test
 
-Giới hạn hiện tại là chỉ có 10 bo và một split theo bo; test đã được dùng để báo cáo; accuracy classifier crop không tính lỗi định vị; workspace hiện không có dataset đã chuyển đổi hoặc weights huấn luyện. Bước tiếp theo là khôi phục dataset/weights để tái lập toàn bộ quy trình, bổ sung dữ liệu từ nhiều bo nếu có, và tiếp tục phân tích false positive trên validation mà không tinh chỉnh theo test.
+### 6.1. Hiện tượng
 
-## 7. File kết quả tham khảo và trạng thái workspace
+Ở conf 0,25, test có 601 nhãn: 573 đúng, 6 nhầm lớp, 22 bỏ sót và **307 dự đoán thừa** (validation chỉ có 20). Cơ cấu khác nhau: ở val, 18/20 là box lệch vị trí hoặc trùng với lỗi đã ghép; ở test, 299/307 nằm trên vùng nền (IoU với mọi nhãn dưới 0,1). Precision thấp tập trung ở Missing Hole (119 box thừa) và Short (123); P, R từng lớp nằm trong `results/pcb_v8s_board_test/metrics_per_class.csv`.
 
-- `configs/train_params.md`: cấu hình và nhật ký huấn luyện.
-- `configs/board_split.json`, `configs/data_board.yaml`: manifest và cấu hình dữ liệu.
-- `results/data_audit.csv`: báo cáo audit split/dữ liệu.
-- `results/summary.csv`, `results/test_metrics.csv`: kết quả tổng hợp YOLO.
-- `results/pcb_v8s_board_val/metrics_per_class.csv`: kết quả theo lớp trên validation.
-- `results/pcb_v8s_board_val_errors/`: các bảng phân tích lỗi.
-- `results/pipeline_val.csv`, `results/pipeline_test.csv`, `results/pipeline_test_cls.csv`: kết quả pipeline XOR.
+### 6.2. Các box thừa lặp lại ở vị trí cố định
 
-Các đường dẫn trên là nơi sinh đầu ra theo cấu hình script. Trong workspace hiện tại, `dataset/` chỉ có `.gitkeep` và không thấy thư mục `runs/`; vì vậy dữ liệu YOLO/crop cùng weights cần được khôi phục từ nguồn lưu trữ trước khi chạy lại từ đầu. Các CSV và biểu đồ trong `results/` vẫn được lưu trong repo.
+Gom box thừa theo vị trí tâm (làm tròn 30 px), 290/307 (94,5%) nằm ở 5 vị trí, mỗi vị trí xuất hiện ở 51–60 trong 60 ảnh của cùng một bo; 17 box còn lại rải rác.
 
-## Tài liệu tham khảo
+| Bo | Lớp bị báo | Vị trí (x, y) | Số ảnh | conf TB | Quan sát trên ảnh | Sau ngưỡng theo lớp |
+|---|---|---|---:|---:|---|---|
+| 08 | Missing Hole | 180, 1080 | 60 | 0,59 | vòng tròn in giữa hai pad | còn |
+| 08 | Missing Hole | 1740, 510 | 59 | 0,34 | vòng tròn tương tự | còn |
+| 12 | Short | 1170, 1140 | 60 | 0,63 | nhánh đồng nối giữa hai pad | còn |
+| 12 | Short | 1560, 1110 | 60 | 0,39 | chỗ hai đường mạch giao nhau | bị loại |
+| 12 | Spurious Copper | 1710, 1560 | 51 | 0,32 | đoạn đồng chéo nằm riêng | còn |
 
-1. W. Huang, P. Wei, “A PCB Dataset for Defects Detection and Classification,” arXiv:1901.08204, 2019.
-2. Ixiaohuihuihui, Tiny-Defect-Detection-for-PCB, GitHub repository.
-3. R. Ding et al., “TDD-Net: a tiny defect detection network for printed circuit boards,” *CAAI Transactions on Intelligence Technology*, vol. 4, no. 2, pp. 110–116, 2019.
-4. Ultralytics YOLO documentation: https://docs.ultralytics.com
-5. OpenCV documentation: https://docs.opencv.org
-6. Gradio documentation: https://www.gradio.app/docs
+### 6.3. Bằng chứng đây là chi tiết có thật của bo
 
-- **Kết quả validation cao hơn test:** trình bày cả hai, không che giấu; dùng validation để chọn mô hình và giữ test làm đánh giá cuối.
-- **Chỉ có 10 bo và một split:** kết luận về khả năng tổng quát còn hạn chế; nên bổ sung bo hoặc nhiều split/seed khi có dữ liệu.
-- **False positive trên test:** phân tích sau khi chốt mô hình, không điều chỉnh ngưỡng dựa trên test.
-- **Classifier crop cho kết quả cao:** nêu rõ đây là crop theo nhãn thật; báo riêng accuracy trên box do XOR tìm được.
-- **Căn chỉnh XOR thất bại:** ghi số ảnh thất bại và cách tính chúng vào thống kê; không bỏ qua các trường hợp lỗi.
-- **Thiếu dữ liệu/weights trong workspace:** cần khôi phục dataset và checkpoint phù hợp trước khi chạy lại từ đầu; các kết quả CSV hiện có không thay thế được dữ liệu và weights.
-- **Lệch tên lớp:** kiểm tra thứ tự class ID trong nhãn, YAML và weights trước khi diễn giải metric theo lớp.
+- Ở bo 08, box `145, 1043, 221, 1119` xuất hiện giống nhau đến từng pixel trong 54/60 ảnh, và có mặt ở 10 ảnh của mỗi lớp lỗi (kể cả `mouse_bite`, `short`, `spur`). Nếu là lỗi bị gán thiếu nhãn thì nó không thể xuất hiện ở ảnh của mọi lớp.
+- Cắt đúng vị trí đó từ 6 ảnh test của cùng bo cho nội dung giống hệt nhau (`results/hotspot2_<bo>_<x>_<y>.png`): đây là chi tiết thiết kế của bo, không phải lỗi được thêm vào ảnh.
+- Mô hình nhầm các cấu trúc trông giống lỗi: vòng tròn rỗng giống lỗ thiếu, chỗ nối hoặc giao đường mạch giống đoản mạch, đoạn đồng lẻ giống đồng thừa.
 
-## 7. Hướng hoàn thiện
+Chưa đối chiếu với ảnh bo mẫu `PCB_USED`. Điểm bo 12 (1170, 1140) có thể là thiết kế hợp lệ hoặc một lỗi có sẵn trên bo gốc mà bộ dữ liệu không gán nhãn; chưa phân biệt được từ ảnh.
 
-1. Khôi phục dataset và weights cần thiết, chạy lại hướng dẫn từ một môi trường sạch để kiểm tra khả năng tái lập.
-2. Hoàn thiện demo với detector và, nếu cần, classifier; ghi rõ weights được dùng và cách chạy.
-3. Nếu có thêm dữ liệu, đánh giá qua nhiều bo/split để giảm phụ thuộc vào một lần chia.
-4. Tiếp tục phân tích false positive và lỗi theo kích thước trên validation; không dùng test để chọn tham số.
-5. Hoàn thiện slide và báo cáo cuối, bảo đảm mỗi kết quả liên kết được với CSV/biểu đồ nguồn.
+### 6.4. Vì sao mAP gần như không đổi nhưng precision tụt
 
-### Tóm tắt
+Các box thừa có độ tin cậy thấp đến trung bình (trung bình theo lớp 0,31–0,56). AP tính trên toàn đường precision–recall nên ít bị ảnh hưởng (mAP50 0,978 → 0,972), còn precision đo tại một ngưỡng cố định (0,975 → 0,854).
 
-Repo hiện ghi nhận quy trình chia dữ liệu theo bo, nhiều thí nghiệm YOLO, đánh giá test cho YOLOv8s board, phân tích lỗi và pipeline XOR. Kết quả chính của detector được lưu trong `results/test_metrics.csv`; các kết quả validation và phân tích chi tiết nằm dưới `results/`. Khi trình bày, cần phân biệt rõ số liệu validation/test, detector/classifier crop và metric YOLO/XOR; đồng thời nêu rằng dataset và weights không có trong workspace hiện tại.
+### 6.5. Ngưỡng tin cậy chọn trên validation
+
+Quét conf trên val (P, R gộp tất cả box; "box sai" gồm box thừa và nhầm lớp):
+
+| conf | P | R | F1 | box sai | bỏ sót |
+|---|---:|---:|---:|---:|---:|
+| 0,25 | 0,962 | 0,977 | 0,970 | 23 | 11 |
+| 0,40 | 0,976 | 0,954 | 0,965 | 14 | 25 |
+| 0,50 | 0,981 | 0,942 | 0,961 | 11 | 33 |
+| 0,60 | 0,987 | 0,905 | 0,945 | 7 | 56 |
+
+Nâng ngưỡng chung từ 0,25 lên 0,40 chỉ bớt 9 box sai nhưng thêm 14 box bỏ sót, nên không có lợi. `tools/select_thresholds.py` chọn ngưỡng từng lớp theo F1 trên val với ràng buộc recall lớp ≥ 0,90; kết quả (`configs/thresholds.json`): **Short 0,5, các lớp còn lại 0,25**. Áp dụng lên test (`analyze_errors.py --thresholds`): đúng 573, nhầm lớp 6, bỏ sót 22 (không đổi), **dự đoán thừa 307 → 245** (Missing Hole 119, Short 61, Spurious Copper 55, Mouse Bite 7, Spur 2, Open Circuit 1). Phần giảm 62 box chính là vị trí Short ở (1560, 1110). Đường F1 của Ultralytics (trung bình theo lớp) đạt đỉnh 0,97 tại conf 0,406 và gần phẳng trong khoảng 0,2–0,6, nên chênh lệch giữa các ngưỡng là nhỏ.
+
+P, R gộp trên test (601 nhãn): trước 573/(573+6+307) ≈ 0,647 và 573/601 ≈ 0,953; sau ngưỡng theo lớp 573/(573+6+245) ≈ 0,695 và 0,953. Đây là cách tính khác với P = 0,854 trung bình theo lớp của Ultralytics, nên không đặt hai số cạnh nhau như cùng một đại lượng.
+
+### 6.6. Phần còn lại và hướng xử lý
+
+245 box thừa còn lại có 229 box nằm ở 4 vị trí trên, với độ tin cậy 0,59–0,63 ở hai vị trí đầu. Ngưỡng chọn trên validation không loại được chúng mà không làm mất box đúng. Các hướng, theo mức hợp lý:
+
+1. **So khớp với bo mẫu (XOR):** vùng giống hệt bo mẫu không khác biệt nên không bị báo; đây là hướng đúng nguyên lý, nhưng cần ảnh bo mẫu (golden board) và căn chỉnh tốt. Chưa chạy bản kết hợp YOLO + XOR nên chưa có số.
+2. **Hard negative với hoán đổi bo:** đưa bo 08 và 12 vào train, chọn hai bo khác làm test, rồi đo lại. Không dùng ảnh test để huấn luyện rồi vẫn gọi là kết quả trên bo chưa thấy.
+3. **Thêm bo vào huấn luyện:** chữa tận gốc vì mô hình hiện chỉ thấy 6 bo train.
+
+## 7. Kết luận, hạn chế và hướng tiếp theo
+
+Dữ liệu được chuyển nhãn VOC sang YOLO và chia theo ID bo (6/2/2). YOLOv8s (imgsz 1024) đạt mAP50 0,9782 và mAP50-95 0,5507 trên validation; trên test đạt mAP50 0,9720 và mAP50-95 0,5162, recall 0,9336. Precision trên test thấp hơn (0,8543) do 307 box thừa, trong đó 94,5% là các chi tiết cố định của hai bo test bị nhầm thành lỗi. Ngưỡng theo lớp chọn trên validation giảm còn 245 box thừa mà không mất box đúng. Hướng XOR đạt F1 0,6376 trên test ở IoU 0,5, thấp hơn YOLO, nhưng hai hướng đo khác nhau.
+
+Hạn chế:
+
+- Chỉ có 10 bo, một seed, mỗi tập 2 bo; kết quả nhạy với đặc thù từng bo.
+- Box thừa trên test chưa được đối chiếu với ảnh bo mẫu; chưa chạy kết hợp YOLO + XOR.
+- XOR cần ảnh không lỗi của đúng bo, cùng mặt và góc chụp gần giống; YOLO không cần nhưng dễ nhầm chi tiết thiết kế của bo mới.
+- Classifier crop top-1 0,990 đo trên box nhãn thật, không tính lỗi định vị.
+- Test đã được dùng để phân tích lỗi; ngưỡng không chọn theo test.
+
+Hướng tiếp theo: thêm bo hoặc đánh giá chéo theo bo, hard negative với hoán đổi bo, kết hợp YOLO với so khớp bo mẫu khi có ảnh mẫu, thêm một seed.
+
+## 8. File kết quả tham khảo
+
+- `configs/train_params.md`, `configs/board_split.json`, `configs/data_board.yaml`, `configs/thresholds.json`.
+- `results/summary.csv`, `results/test_metrics.csv`, `results/data_audit.csv`.
+- `results/pcb_v8s_board_val/metrics_per_class.csv`, `results/pcb_v8s_board_test/metrics_per_class.csv`.
+- `results/pcb_v8s_board_val_errors/`, `results/pcb_v8s_board_test_errors/` (gồm `false_pos_list.csv`), `results/val_conf_*_val_errors/`, `results/test_per_class_test_errors/`.
+- `results/hotspot2_*.png`: ảnh cắt các vị trí box thừa.
+- `results/pipeline_val.csv`, `results/pipeline_test.csv`, `results/pipeline_test_cls.csv`.
+- `reports/bang_so_lieu.md`: bảng tự sinh từ `results/`.
 
 ## Tài liệu tham khảo
 

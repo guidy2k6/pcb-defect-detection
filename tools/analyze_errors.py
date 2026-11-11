@@ -65,6 +65,7 @@ def main():
     ap.add_argument("--conf", type=float, default=0.25)
     ap.add_argument("--match-iou", type=float, default=0.5)
     ap.add_argument("--device", default="0")
+    ap.add_argument("--thresholds", default=None, help="configs/thresholds.json: nguong conf rieng tung lop")
     a = ap.parse_args()
 
     from ultralytics import YOLO  # import tre de test ham thuan khong can cai ultralytics
@@ -72,9 +73,15 @@ def main():
     names, images = load_split(a.data, a.split)
     n = len(names)
     model = YOLO(a.weights)
+    thr = None
+    if a.thresholds:
+        import json
+        cfg = json.loads(Path(a.thresholds).read_text(encoding="utf-8"))
+        thr = np.array([cfg["per_class"][names[i]] for i in range(n)])
     rec = {"gt": [], "extra": [], "extra_kind": [], "extra_conf": [], "extra_info": []}
     for r in model.predict(source=[str(p) for p in images], stream=True, verbose=False,
-                           imgsz=a.imgsz, conf=a.conf, device=a.device, batch=1):
+                           imgsz=a.imgsz, conf=(float(thr.min()) if thr is not None else a.conf),
+                           device=a.device, batch=1):
         h, w = r.orig_shape
         img = Path(r.path)
         gts = read_labels(img)
@@ -84,6 +91,9 @@ def main():
         p_xyxy = r.boxes.xyxy.cpu().numpy().reshape(-1, 4)
         p_cls = r.boxes.cls.cpu().numpy().astype(int)
         p_conf = r.boxes.conf.cpu().numpy()
+        if thr is not None:
+            keep = p_conf >= thr[p_cls]
+            p_xyxy, p_cls, p_conf = p_xyxy[keep], p_cls[keep], p_conf[keep]
 
         pairs, missed, extra = match_image(g_xyxy, g_cls, p_xyxy, p_cls, p_conf, a.match_iou)
         area = (g_xyxy[:, 2] - g_xyxy[:, 0]) * (g_xyxy[:, 3] - g_xyxy[:, 1]) / (w * h) if len(gts) else []
@@ -171,7 +181,7 @@ def main():
                         int((kinds[m] == "lech").sum()), int((kinds[m] == "nen").sum()),
                         f"{confs[m].mean():.3f}" if m.any() else ""])
 
-    print(f"Tham so co dinh: conf={a.conf}, match IoU={a.match_iou}, imgsz={a.imgsz}, tap={a.split}")
+    print(f"Tham so co dinh: conf={'theo lop ' + a.thresholds if a.thresholds else a.conf}, match IoU={a.match_iou}, imgsz={a.imgsz}, tap={a.split}")
     print(f"Nhan: {n_gt} | dung {n_ok} | nham lop {n_conf} | bo sot {n_miss} | bao thua {n_fp}")
     print(f"Kiem tra: nhan = {n_ok}+{n_conf}+{n_miss} = {n_ok + n_conf + n_miss}; "
           f"du doan = {n_ok}+{n_conf}+{n_fp} = {n_ok + n_conf + n_fp}")

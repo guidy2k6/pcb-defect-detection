@@ -1,0 +1,10 @@
+.git
+.venv
+PCB_DATASET
+dataset
+runs
+output
+input
+*.zip
+*.rar
+__pycache__
