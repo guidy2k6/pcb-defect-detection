@@ -2,5 +2,5 @@
 
 torch==2.14.1+cu126
 ultralytics==8.4.194
-gradio==X.Y.Z
 huggingface_hub
+gradio>=6.0,<7

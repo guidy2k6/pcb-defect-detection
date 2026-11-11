@@ -1,0 +1,16 @@
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The tests use fake models, so no torch/ultralytics (and no weights) are needed.
+      - run: pip install numpy opencv-python-headless pytest pyyaml "gradio>=6.0,<7"
+      - run: python -m pytest -q tests

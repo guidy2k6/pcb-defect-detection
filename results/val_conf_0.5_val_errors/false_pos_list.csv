@@ -1,0 +1,10 @@
+image,pred_class,conf,kind,x1,y1,x2,y2
+11_open_circuit_02.jpg,Open Circuit,0.705,nen,301,543,383,614
+11_short_01.jpg,Short,0.708,lech,1048,1030,1173,1155
+11_short_01.jpg,Short,0.510,trung,675,1322,816,1436
+11_short_03.jpg,Short,0.541,trung,846,1165,942,1257
+11_short_06.jpg,Short,0.721,lech,818,1892,906,2006
+11_short_08.jpg,Short,0.728,lech,1086,1386,1183,1472
+11_short_10.jpg,Short,0.692,lech,844,1016,971,1155
+11_spur_04.jpg,Spur,0.777,lech,753,628,868,685
+11_spurious_copper_07.jpg,Spurious Copper,0.592,lech,963,1378,1009,1487

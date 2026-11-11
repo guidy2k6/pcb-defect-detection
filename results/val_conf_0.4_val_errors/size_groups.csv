@@ -1,0 +1,4 @@
+group,area_max_frac,gt,missed,miss_rate,confused,confused_rate
+nho,0.000922,201,5,0.0249,0,0.0000
+vua,0.001300,201,6,0.0299,0,0.0000
+lon,0.003793,201,14,0.0697,3,0.0149
