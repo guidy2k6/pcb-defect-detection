@@ -2,7 +2,7 @@
 
 **Đề tài:** Phát hiện và phân loại lỗi trên bảng mạch in PCB  
 **Ngày cập nhật:** 11/11/2026  
-**Trạng thái:** Đã có dữ liệu chia theo bo, kết quả YOLO trên validation và test, phân tích lỗi (gồm 307 dương tính giả trên test), ngưỡng tin cậy theo lớp, pipeline XOR và demo.
+**Trạng thái:** Đã có dữ liệu chia theo bo, kết quả YOLO trên validation và test, phân tích lỗi (gồm 307 dương tính giả trên test), ngưỡng tin cậy theo lớp, pipeline XOR, kết hợp YOLO + lọc XOR (precision test 0,609 → 0,966) và demo.
 
 ## 1. Tổng quan
 
@@ -46,6 +46,7 @@ Hướng ảnh mẫu: căn chỉnh ảnh lỗi với ảnh PCB chuẩn, nhị ph
 | Tổng hợp các lần eval | `tools/build_summary.py` | `results/summary.csv` |
 | Classifier crop | `data/io/collect_crops.py`, `tools/train_cls.py` | `dataset/cls/`, `results/pcb_cls_board*` |
 | Đánh giá XOR | `tools/eval_pipeline.py` | `results/pipeline_<split>.csv` |
+| Kết hợp YOLO + lọc XOR | `tools/fusion.py`, `tools/eval_fusion.py` | `configs/fusion.json`, `results/fusion_val_sweep.csv`, `results/fusion_test.csv` |
 
 ### 1.5. Nguyên tắc báo cáo kết quả
 
@@ -111,6 +112,8 @@ Các lần chạy ghi trong nhật ký ngày 31/10/2026 và 02/11/2026; sửa t�
 | YOLOv8s board (conf 0,25) | Test | 0,8543 | 0,9336 | mAP50 0,9720 | 0,5162 | 25,71 ms/ảnh |
 | XOR cải tiến (`new`) | Validation, IoU 0,5 | 0,6204 | 0,6153 | F1 0,6178 | — | — |
 | XOR cải tiến (`new`) | Test, IoU 0,5 | 0,6555 | 0,6206 | F1 0,6376 | — | — |
+| YOLOv8s thuần (conf theo lớp, P/R gộp, khớp cùng lớp) | Test, IoU 0,5 | 0,609 | 0,953 | F1 0,743 | — | — |
+| **YOLOv8s + lọc XOR** (`min_px=10`) | Test, IoU 0,5 | 0,966 | 0,953 | F1 0,960 | — | — |
 
 P, R của YOLO là trung bình theo lớp (Ultralytics). Theo lớp trên test:
 
@@ -123,7 +126,35 @@ P, R của YOLO là trung bình theo lớp (Ultralytics). Theo lớp trên test:
 | Spur | 1,0000 | 0,7138 |
 | Spurious Copper | 0,9514 | 0,9900 |
 
-Trên validation, YOLOv8s board có 589 box đúng, 3 nhầm lớp, 11 bỏ sót và 20 dự đoán thừa trên 603 nhãn. Bộ phân loại trên box XOR tìm đúng đạt 342/373 = 0,9169 (accuracy có điều kiện). Classifier crop top-1 0,990 trên test được đo trên crop theo box thật nên là cận trên.
+Trên validation, YOLOv8s board có 589 box đúng, 3 nhầm lớp, 11 bỏ sót và 20 dự đoán thừa trên 603 nhãn. Bộ phân loại trên box XOR tìm đúng đạt 342/373 = 0,9169 (accuracy có điều kiện). Sai số tập trung ở **Spur**: trong 47 vùng Spur tìm đúng, 28 bị gán thành Spurious Copper (recall Spur 19/47 = 0,40), còn các lớp khác đạt từ 0,96 trở lên (`results/pipeline_test_cls.csv`). Hai lớp này đều là phần đồng nhỏ nhô ra cạnh đường mạch nên crop 128×128 rất giống nhau; đây cũng là lý do ưu tiên nhãn lớp từ YOLO (Spur P = 1,00 trên test) khi kết hợp hai hướng. Classifier crop top-1 0,990 trên test được đo trên crop theo box thật nên là cận trên.
+
+### 5.1. So sánh với bài báo gốc
+
+Bài báo [1] đo định vị bằng sai số số lượng Pd = |d − a| / a × 100% (d là số vùng phát hiện, a là số lỗi thật; công thức 9 của bài báo) và phân loại bằng độ chính xác theo lớp. Pd chỉ so **số lượng**, không kiểm tra vị trí, nên ở đây được tính cùng công thức và đặt cạnh P, R theo IoU để thấy đủ hai mặt.
+
+| Phương pháp | Tập | Số dự đoán | Số nhãn | Pd | Ghi chú |
+|---|---|---:|---:|---:|---|
+| Bài báo [1] (SURF + XOR) | Cả 693 ảnh, không có tập test riêng | 2955 | 2953 | 0,07% (mỗi lớp 0–0,2%) | 1 phát hiện nhầm, 1 vùng trùng |
+| XOR cải tiến (nhóm) | Validation | 598 | 603 | 0,83% | F1 0,618 ở IoU 0,5 |
+| XOR cải tiến (nhóm) | Test | 569 | 601 | 5,32% | F1 0,638 ở IoU 0,5; recall 0,929 ở IoU 0,1 |
+| YOLOv8s thuần | Test | 941 | 601 | 56,57% | P 0,609, R 0,953 |
+| YOLOv8s + lọc XOR | Test | 593 | 601 | 1,33% | P 0,966, R 0,953, F1 0,960 |
+
+Phân loại:
+
+| Chỉ số | Bài báo [1] | Nhóm |
+|---|---|---|
+| Trên ảnh cắt theo nhãn, tập test | 97,74% (thấp nhất Spur 93,65%) | 0,990 (top-1) |
+| Trên vùng do bước định vị tìm ra | 99,40% | 0,917 (342/373); Spur 19/47 = 0,40, năm lớp còn lại 0,969–1,000 |
+| Thời gian một ảnh | 0,9889 s (đăng ký ảnh 0,6219 s) | YOLO 25,71 ms; đường XOR chưa ghi trong báo cáo |
+
+Cần đọc các số này với các lưu ý sau:
+
+- Bài báo không nói rõ có chia theo bo mạch hay không, và định vị được đánh giá trên toàn bộ ảnh (không có tập giữ lại), còn nhóm đánh giá trên 2 bo chưa thấy khi chọn tham số. Pd chỉ đếm số lượng nên không chứng minh vị trí đúng.
+- Đường XOR của nhóm kém bài báo ở Pd (5,32% so với 0,07%) và ở độ chính xác phân loại trên vùng tìm ra, tập trung ở lớp Spur. Nhóm chưa kiểm chứng nguyên nhân; giả thuyết là bộ phân loại huấn luyện trên crop theo nhãn thật nhưng nhận crop từ box XOR (phóng to hệ số 2,0). Bài báo cũng nhận xét crop từ so ảnh mẫu nhỏ hơn crop theo nhãn và ảnh hưởng đến kết quả.
+- Nhóm tốt hơn bài báo ở độ chính xác phân loại trên ảnh cắt theo nhãn (0,990 so với 97,74%), nhưng khác thiết lập (kích thước crop, cách chia dữ liệu, bộ phân loại) nên chỉ mang tính tham khảo.
+- Thời gian không so trực tiếp được vì khác phần cứng (YOLO đo trên RTX 3050) và khác phạm vi (bài báo gồm đăng ký ảnh).
+- Bài báo không đo mAP và không có chỉ số P, R theo IoU, nên các số này chỉ có ở nhóm.
 
 ## 6. Phân tích dương tính giả trên test
 
@@ -174,23 +205,31 @@ P, R gộp trên test (601 nhãn): trước 573/(573+6+307) ≈ 0,647 và 573/60
 
 245 box thừa còn lại có 229 box nằm ở 4 vị trí trên, với độ tin cậy 0,59–0,63 ở hai vị trí đầu. Ngưỡng chọn trên validation không loại được chúng mà không làm mất box đúng. Các hướng, theo mức hợp lý:
 
-1. **So khớp với bo mẫu (XOR):** vùng giống hệt bo mẫu không khác biệt nên không bị báo; đây là hướng đúng nguyên lý, nhưng cần ảnh bo mẫu (golden board) và căn chỉnh tốt. Chưa chạy bản kết hợp YOLO + XOR nên chưa có số.
+1. **So khớp với bo mẫu (XOR) — đã chạy (`tools/fusion.py`, `tools/eval_fusion.py`).** Giữ box YOLO chỉ khi mặt nạ XOR (đã căn chỉnh, lọc nhiễu) có ít nhất `min_px` pixel khác biệt trong box (mở rộng 8 px); box không xác minh được (gần viền đen do warp) được giữ. `min_px = 10` chọn trên validation với ràng buộc recall val giảm không quá 0,01: F1 val 0,9727 → 0,9735, và ổn định với `min_px` từ 10 đến 100 rồi giảm từ 200 (recall tụt, `results/fusion_val_sweep.csv`). Validation gần như không có hotspot (18 → 17 box thừa) nên hiệu quả chủ yếu thể hiện trên test, được chạy đúng một lần (`results/fusion_test.csv`, ngưỡng conf theo lớp, P/R gộp, khớp cùng lớp ở IoU 0,5, 0 ảnh căn chỉnh thất bại):
+
+| Phương pháp | TP | FP | FN | P | R | F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| YOLOv8s thuần | 573 | 368 | 28 | 0,609 | 0,953 | 0,743 |
+| YOLOv8s + lọc XOR | 573 | 20 | 28 | 0,966 | 0,953 | 0,960 |
+
+Loại 348/368 box thừa và không mất box đúng nào (TP giữ nguyên 573). Các box thừa lặp lại không khác ảnh bo mẫu, phù hợp với nhận định ở 6.3 rằng chúng là chi tiết thiết kế của bo. Lưu ý cách tính: số FP của YOLO thuần (368) không đặt cạnh 307/245 ở 6.1 và 6.5 vì cách khớp khác (khớp cùng lớp ở IoU 0,5; nhầm lớp tính là một FP và một FN); tập đánh giá giống nhau (120 ảnh, 601 nhãn).
 2. **Hard negative với hoán đổi bo:** đưa bo 08 và 12 vào train, chọn hai bo khác làm test, rồi đo lại. Không dùng ảnh test để huấn luyện rồi vẫn gọi là kết quả trên bo chưa thấy.
 3. **Thêm bo vào huấn luyện:** chữa tận gốc vì mô hình hiện chỉ thấy 6 bo train.
 
 ## 7. Kết luận, hạn chế và hướng tiếp theo
 
-Dữ liệu được chuyển nhãn VOC sang YOLO và chia theo ID bo (6/2/2). YOLOv8s (imgsz 1024) đạt mAP50 0,9782 và mAP50-95 0,5507 trên validation; trên test đạt mAP50 0,9720 và mAP50-95 0,5162, recall 0,9336. Precision trên test thấp hơn (0,8543) do 307 box thừa, trong đó 94,5% là các chi tiết cố định của hai bo test bị nhầm thành lỗi. Ngưỡng theo lớp chọn trên validation giảm còn 245 box thừa mà không mất box đúng. Hướng XOR đạt F1 0,6376 trên test ở IoU 0,5, thấp hơn YOLO, nhưng hai hướng đo khác nhau.
+Dữ liệu được chuyển nhãn VOC sang YOLO và chia theo ID bo (6/2/2). YOLOv8s (imgsz 1024) đạt mAP50 0,9782 và mAP50-95 0,5507 trên validation; trên test đạt mAP50 0,9720 và mAP50-95 0,5162, recall 0,9336. Precision trên test thấp hơn (0,8543) do 307 box thừa, trong đó 94,5% là các chi tiết cố định của hai bo test bị nhầm thành lỗi. Ngưỡng theo lớp chọn trên validation giảm còn 245 box thừa mà không mất box đúng. Hướng XOR đứng riêng đạt F1 0,6376 trên test ở IoU 0,5, thấp hơn YOLO, nhưng hai hướng đo khác nhau. Khi dùng mặt nạ XOR để xác minh box YOLO, precision test tăng từ 0,609 lên 0,966 và F1 từ 0,743 lên 0,960, recall giữ 0,953 (348 box thừa bị loại, không mất box đúng).
 
 Hạn chế:
 
 - Chỉ có 10 bo, một seed, mỗi tập 2 bo; kết quả nhạy với đặc thù từng bo.
-- Box thừa trên test chưa được đối chiếu với ảnh bo mẫu; chưa chạy kết hợp YOLO + XOR.
+- Kết hợp YOLO + XOR cần ảnh bo mẫu không lỗi của đúng bo; chưa đo trường hợp bo mới không có mẫu. `min_px` chọn trên validation gần như không có hotspot nên hiệu quả chủ yếu kiểm chứng trên 2 bo test.
+- Lớp Spur còn yếu: recall 0,82 ở detector (18/28 box bỏ sót) và bộ phân loại crop nhầm nhiều sang Spurious Copper.
 - XOR cần ảnh không lỗi của đúng bo, cùng mặt và góc chụp gần giống; YOLO không cần nhưng dễ nhầm chi tiết thiết kế của bo mới.
 - Classifier crop top-1 0,990 đo trên box nhãn thật, không tính lỗi định vị.
 - Test đã được dùng để phân tích lỗi; ngưỡng không chọn theo test.
 
-Hướng tiếp theo: thêm bo hoặc đánh giá chéo theo bo, hard negative với hoán đổi bo, kết hợp YOLO với so khớp bo mẫu khi có ảnh mẫu, thêm một seed.
+Hướng tiếp theo: thêm bo hoặc đánh giá chéo theo bo, hard negative với hoán đổi bo, cải thiện recall lớp Spur, thêm một seed.
 
 ## 8. File kết quả tham khảo
 
@@ -200,6 +239,7 @@ Hướng tiếp theo: thêm bo hoặc đánh giá chéo theo bo, hard negative v
 - `results/pcb_v8s_board_val_errors/`, `results/pcb_v8s_board_test_errors/` (gồm `false_pos_list.csv`), `results/val_conf_*_val_errors/`, `results/test_per_class_test_errors/`.
 - `results/hotspot2_*.png`: ảnh cắt các vị trí box thừa.
 - `results/pipeline_val.csv`, `results/pipeline_test.csv`, `results/pipeline_test_cls.csv`.
+- `configs/fusion.json`, `results/fusion_val_sweep.csv`, `results/fusion_test.csv`.
 - `reports/bang_so_lieu.md`: bảng tự sinh từ `results/`.
 
 ## Tài liệu tham khảo

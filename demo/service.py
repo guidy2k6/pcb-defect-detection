@@ -1,9 +1,10 @@
 """Inference service behind the Gradio UI. No gradio import here, so everything is unit-testable.
 
-Three analyses are exposed by PCBInspector:
+Four analyses are exposed by PCBInspector:
   detect()          one image  -> YOLOv8s detector (single stage)
   xor_inspect()     image + defect-free template of the same board -> SIFT alignment, XOR, crop classifier (the paper's route)
-  cross_check()     both of the above on the same pair, with a simple agreement rule between them
+  cross_check()     both of the above on the same pair, with a simple agreement rule between them (illustrative only)
+  fusion_check()    YOLO boxes verified against the XOR change map of the same pair (the evaluated fusion, tools/fusion.py)
 
 Design notes
   * Models load lazily and are validated: detector weights that still carry the old permuted class names are rejected
@@ -285,6 +286,7 @@ def load_reference_metrics(results_dir: Path) -> dict:
         "per_class": rows(results_dir / "pcb_v8s_board_test" / "metrics_per_class.csv"),
         "xor": [r for r in rows(results_dir / "pipeline_test.csv") if r.get("variant") == "new"],
         "summary": rows(results_dir / "summary.csv"),
+        "fusion": [r for r in rows(results_dir / "fusion_test.csv") if r.get("class") == "ALL"],
     }
 
 
@@ -299,6 +301,24 @@ def _pipeline():
     import pipeline  # noqa: WPS433
     import crop_utils  # noqa: WPS433
     return pipeline, crop_utils
+
+
+def _fusion():
+    """Import tools/fusion.py lazily (numpy + OpenCV only)."""
+    _pipeline()  # puts tools/ on sys.path
+    import fusion  # noqa: WPS433
+    return fusion
+
+
+def _fusion_params() -> dict:
+    """min_px / pad / min_valid chosen on validation by tools/eval_fusion.py --sweep (configs/fusion.json); defaults otherwise."""
+    params = {"min_px": 10, "pad": 8, "min_valid": 0.5}
+    try:
+        cfg = json.loads((REPO / "configs" / "fusion.json").read_text(encoding="utf-8"))
+        params.update({k: cfg[k] for k in params if k in cfg})
+    except (OSError, ValueError):
+        pass
+    return params
 
 
 def _load_yolo(path: Path):
@@ -574,7 +594,52 @@ class PCBInspector:
                      {"yolo": (t1 - t0) * 1e3, "xor_classify": (t2 - t1) * 1e3, "total": (time.perf_counter() - t0) * 1e3},
                      extra_images={"xor_map": self._xor_map(r)}, crops=evidence_crops(r["defect"], dets),
                      score_kind="mixed: detector (YOLO) / classifier (XOR-only)")
-        a.notes.append("Quy tắc đối chiếu (ghép box ở IoU ≥ %.1f) chỉ để minh họa; chưa được đánh giá như một phương pháp riêng." % match_iou)
+        a.notes.append("Quy tắc đối chiếu (ghép box ở IoU ≥ %.1f) chỉ để minh họa. Phương pháp kết hợp đã được đánh giá là tab "
+                       "«YOLO + lọc XOR» (xem tab Thông tin mô hình)." % match_iou)
+        self._finish(a)
+        return a
+
+    # ---- 4. YOLO verified by XOR ----------------------------------------------------------------------------------
+    def fusion_check(self, defect_path, template_path, conf: float | None = None) -> Analysis:
+        """Keep a YOLO box only if the aligned XOR change mask has enough changed pixels inside it (tools/fusion.py).
+        Fixed board features look identical to the template, so boxes on them are dropped; boxes whose region cannot be
+        verified (near the black warp border) are kept."""
+        if template_path in (None, ""):
+            raise InputError("Chế độ này cần thêm ảnh mẫu không lỗi của đúng bo mạch.")
+        conf = float(np.clip(self.s.default_conf if conf is None else conf, 0.01, 0.99))
+        t0 = time.perf_counter()
+        defect = load_image(defect_path, self.s.max_upload_mb, self.s.min_side_px)
+        load_image(template_path, self.s.max_upload_mb, self.s.min_side_px)
+        yolo = self._yolo_detections(defect, conf, self.s.imgsz, self.s.iou_nms)
+        t1 = time.perf_counter()
+        r, _ = self._xor_stage(defect_path, template_path)
+        pipeline, fusion, p = _pipeline()[0], _fusion(), _fusion_params()
+        boxes = np.asarray([d.box for d in yolo], np.float32).reshape(-1, 4)
+        mask = fusion.change_mask(r["xor_raw"], r["valid"], pipeline.XOR_PARAMS["close"])
+        n_px, v_frac = fusion.evidence(fusion.box_to_aligned(boxes, r["H"]), mask, r["valid"], p["pad"])
+        keep = fusion.keep_flags(n_px, v_frac, p["min_px"], p["min_valid"])
+        t2 = time.perf_counter()
+        dets, items, removed = [], [], 0
+        for d, k, n, v in zip(yolo, keep, n_px, v_frac):
+            if not k:
+                removed += 1
+                items.append((d.box, f"loại · {d.label} {d.score:.2f}", (150, 150, 150)))
+                continue
+            if v < p["min_valid"]:
+                det = Detection(d.label, d.score, d.box, "yolo", "không xác minh được với ảnh mẫu (sát viền sau căn chỉnh), giữ nguyên")
+            else:
+                det = Detection(d.label, d.score, d.box, "both", f"có {int(n)} pixel khác ảnh mẫu trong vùng này")
+            dets.append(det)
+            items.append((det.box, f"{det.label} {det.score:.2f}", CLASS_RGB.get(det.label, (255, 0, 0))))
+        a = Analysis("fusion", render(r["defect"], items, self.s.max_display_side), dets, Path(str(defect_path)).name,
+                     defect.shape[:2], {"conf": conf, "min_px": p["min_px"], "pad": p["pad"], "removed": removed, "device": self.device},
+                     {"yolo": (t1 - t0) * 1e3, "xor_verify": (t2 - t1) * 1e3, "total": (time.perf_counter() - t0) * 1e3},
+                     extra_images={"xor_map": self._xor_map(r)}, crops=evidence_crops(r["defect"], dets), score_kind="detector (YOLO)")
+        if removed:
+            a.notes.append(f"Đã loại {removed}/{len(yolo)} vùng YOLO không khác ảnh mẫu (vẽ màu xám): thường là chi tiết thiết kế "
+                           "của bo bị nhầm thành lỗi.")
+        a.notes.append("Quy tắc này được đánh giá trên tập test (xem tab Thông tin mô hình). Số đo dùng ngưỡng tin cậy theo từng lớp "
+                       "(configs/thresholds.json), còn demo dùng một ngưỡng chung nên kết quả có thể khác.")
         self._finish(a)
         return a
 

@@ -1,0 +1,15 @@
+method,class,tp,fp,fn,P,R,F1
+yolo,ALL,573,368,28,0.6089,0.9534,0.7432
+yolo,missing_hole,99,238,2,0.2938,0.9802,0.4521
+yolo,mouse_bite,96,8,4,0.9231,0.9600,0.9412
+yolo,open_circuit,98,1,2,0.9899,0.9800,0.9849
+yolo,short,99,61,0,0.6188,1.0000,0.7645
+yolo,spur,83,1,18,0.9881,0.8218,0.8973
+yolo,spurious_copper,98,59,2,0.6242,0.9800,0.7626
+yolo+xor,ALL,573,20,28,0.9663,0.9534,0.9598
+yolo+xor,missing_hole,99,0,2,1.0000,0.9802,0.9900
+yolo+xor,mouse_bite,96,8,4,0.9231,0.9600,0.9412
+yolo+xor,open_circuit,98,1,2,0.9899,0.9800,0.9849
+yolo+xor,short,99,2,0,0.9802,1.0000,0.9900
+yolo+xor,spur,83,1,18,0.9881,0.8218,0.8973
+yolo+xor,spurious_copper,98,8,2,0.9245,0.9800,0.9515

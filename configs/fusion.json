@@ -1,0 +1,17 @@
+{
+  "chon_tren": "val",
+  "min_px": 10,
+  "pad": 8,
+  "min_valid": 0.5,
+  "max_recall_drop": 0.01,
+  "val_yolo_only": {
+    "P": 0.9703,
+    "R": 0.9751,
+    "F1": 0.9727
+  },
+  "val_fused": {
+    "P": 0.9719,
+    "R": 0.9751,
+    "F1": 0.9735
+  }
+}

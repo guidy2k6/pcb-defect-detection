@@ -160,6 +160,19 @@ The selected `pcb_v8s_board` checkpoint was evaluated once on the held-out test 
 
 ![Normalized confusion matrix for the board-split test evaluation](results/pcb_v8s_board_test/confusion_matrix_normalized.png)
 
+## YOLO + XOR fusion
+
+The single-stage detector confuses fixed board features with defects on unseen boards (see section 6 of the report). `tools/fusion.py` keeps a YOLO box only if the aligned XOR change mask has at least `min_px` changed pixels inside it (boxes whose region cannot be verified, e.g. near the warp border, are kept). Pick `min_px` on validation, then run the test split once:
+
+```bash
+python tools/eval_fusion.py --dataset PCB_DATASET --weights models/best.pt --split val --sweep --device 0
+python tools/eval_fusion.py --dataset PCB_DATASET --weights models/best.pt --split test --device 0
+```
+
+On the board-level test split (conf thresholds per class, pooled P/R, class-aware IoU 0.5) the filter removes 348 of 368 extra boxes without losing a correct one: P 0.609 → 0.966, R 0.953 → 0.953, F1 0.743 → 0.960 (`results/fusion_test.csv`).
+
+The sweep writes `configs/fusion.json` and `results/fusion_val_sweep.csv`; the test run writes `results/fusion_test.csv` (YOLO-only vs YOLO + XOR, pooled P/R at IoU 0.5, class-aware matching). It needs the defect-free board images in `PCB_USED/`.
+
 ## Acknowledgements
 
 <br> We would like to thank the authors of the original research for making their work publicly available. Their research provides a valuable foundation for this project.
