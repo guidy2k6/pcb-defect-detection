@@ -41,7 +41,7 @@ DISCLAIMER = ("Công cụ phục vụ nghiên cứu và học tập, **không ph
 def verdict_md(a: Analysis) -> str:
     n = len(a.detections)
     total = a.timings_ms.get("total", 0.0)
-    where = {"yolo": "YOLOv8s", "xor": "SIFT + XOR + phân loại", "cross": "YOLOv8s và XOR"}[a.mode]
+    where = {"yolo": "YOLOv8s", "xor": "SIFT + XOR + phân loại", "cross": "YOLOv8s và XOR", "fusion": "YOLOv8s + lọc XOR"}[a.mode]
     if n == 0:
         head = "### Không phát hiện vùng nghi lỗi"
         body = ("Ở ngưỡng hiện tại mô hình không báo vùng nào. Đây **không** phải bảo đảm bo mạch không lỗi: lỗi nhỏ hoặc khó "
@@ -81,6 +81,13 @@ def reference_md(inspector: PCBInspector) -> str:
             if r["class"] != "all":
                 lines.append(f"| {r['class']} | {float(r['precision']):.3f} | {float(r['recall']):.3f} | {float(r['AP50']):.3f} | "
                              f"{float(r['AP50-95']):.3f} |")
+    fus = {r["method"]: r for r in m.get("fusion", [])}
+    if "yolo" in fus and "yolo+xor" in fus:
+        lines += ["", "**YOLO + lọc XOR** (tab 4; P, R gộp tất cả box, khớp cùng lớp, IoU 0,5, ngưỡng tin cậy theo lớp)", "",
+                  "| Phương pháp | TP | FP | FN | Precision | Recall | F1 |", "|---|---:|---:|---:|---:|---:|---:|"]
+        for key, name in (("yolo", "YOLOv8s thuần"), ("yolo+xor", "YOLOv8s + lọc XOR")):
+            f = fus[key]
+            lines.append(f"| {name} | {f['tp']} | {f['fp']} | {f['fn']} | {float(f['P']):.3f} | {float(f['R']):.3f} | {float(f['F1']):.3f} |")
     xor = [r for r in m["xor"] if r.get("iou") == "0.5"]
     if xor:
         x = xor[0]
@@ -168,6 +175,11 @@ def build_ui(inspector: PCBInspector, startup_error: str | None = None) -> gr.Bl
         a = inspector.cross_check(image, template, conf)
         return (*pack(a), a.extra_images["xor_map"])
 
+    @guarded
+    def run_fusion(image, template, conf):
+        a = inspector.fusion_check(image, template, conf)
+        return (*pack(a), a.extra_images["xor_map"])
+
     defect_examples, pair_examples = discover_examples(s.examples_dir)
 
     def result_block(prefix: str, with_map: bool = False):
@@ -238,6 +250,21 @@ def build_ui(inspector: PCBInspector, startup_error: str | None = None) -> gr.Bl
                     with gr.Column(scale=3):
                         o3 = result_block("t3", with_map=True)
                 run3.click(run_cross, [img3, tpl3, conf3], list(o3[:8]) + [o3[8]], concurrency_limit=1)
+
+            with gr.Tab("4 · YOLO + lọc XOR"):
+                gr.Markdown("YOLO phát hiện, rồi **chỉ giữ vùng thật sự khác ảnh mẫu**. Vùng YOLO báo nhưng giống hệt ảnh mẫu (chi tiết thiết kế "
+                            "của bo) bị loại và vẽ màu **xám**. Cần ảnh không lỗi của đúng bo mạch đó.")
+                with gr.Row():
+                    with gr.Column(scale=2):
+                        img4 = gr.Image(type="filepath", label="Ảnh bo mạch cần kiểm tra", sources=["upload"])
+                        tpl4 = gr.Image(type="filepath", label="Ảnh mẫu không lỗi (cùng bo mạch)", sources=["upload"])
+                        conf4 = gr.Slider(0.05, 0.95, value=s.default_conf, step=0.05, label="Ngưỡng tin cậy của YOLO")
+                        run4 = gr.Button("Phân tích", variant="primary")
+                        if pair_examples:
+                            gr.Examples(examples=pair_examples, inputs=[img4, tpl4], label="Cặp ảnh mẫu thử")
+                    with gr.Column(scale=3):
+                        o4 = result_block("t4", with_map=True)
+                run4.click(run_fusion, [img4, tpl4, conf4], list(o4[:8]) + [o4[8]], concurrency_limit=1)
 
             with gr.Tab("Thông tin mô hình"):
                 gr.Markdown(model_card_md(inspector))

@@ -224,6 +224,21 @@ def test_cross_check_marks_agreement(tmp_path):
     assert both.label == "Spur" and "cùng lớp" in both.note
 
 
+def test_fusion_check_drops_unchanged_region_keeps_defect(tmp_path):
+    tpl, dfc, (cx, cy) = synthetic_pair(tmp_path)
+    det = FakeDetector([(cx - 30, cy - 30, cx + 30, cy + 30), (50, 50, 120, 120)], [0.8, 0.5], [4, 1])
+    a = PCBInspector(settings(tmp_path), detector=det, classifier=FakeClassifier()).fusion_check(dfc, tpl)
+    assert a.mode == "fusion" and a.params["removed"] == 1
+    assert [d.label for d in a.detections] == ["Spur"]  # the box on the unchanged region is dropped, the injected defect kept
+    assert "pixel khác ảnh mẫu" in a.detections[0].note
+
+
+def test_fusion_check_requires_template(tmp_path, plain_image):
+    insp = PCBInspector(settings(tmp_path), detector=FakeDetector(), classifier=FakeClassifier())
+    with pytest.raises(InputError):
+        insp.fusion_check(plain_image, None)
+
+
 def test_xor_with_unrelated_template_raises_alignment_error(tmp_path):
     tpl, dfc, _ = synthetic_pair(tmp_path, seed=0)
     sub = tmp_path / "other"

@@ -58,4 +58,4 @@ See the header of `Dockerfile`. Weights are mounted, not baked into the image.
 
 ## Limits
 Research and teaching tool, not a production inspection system. Measured results and known limits are on the *Thông tin mô hình* tab.
-The cross-check rule is illustrative and has not been evaluated as a method of its own.
+The cross-check rule (tab 3) is illustrative and has not been evaluated as a method of its own. Tab 4 (YOLO + XOR filter, `tools/fusion.py`) is the evaluated fusion: results are in `results/fusion_test.csv` and the model-info tab.
