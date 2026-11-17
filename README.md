@@ -71,6 +71,16 @@ python data/io/divide_data.py \
 	--manifest configs/board_split.json
 ```
 
+Generate a separate robustness test set from held-out test boards. The script creates rotated, perspective-tilted, and blurred variants with corresponding YOLO boxes; do not use these variants for training:
+
+```bash
+python data/io/make_robust_testset.py \
+	--data configs/data_board.yaml \
+	--out dataset/pcb_robust_testset
+```
+
+The output is organized as `images/<variant>/` and `labels/<variant>/`. Rotation angles and blur kernels can be customized with `--rotate-angles` and `--blur-kernels`.
+
 Train YOLOv8s on the board-level split. Ultralytics downloads `yolov8s.pt` if it is not already available:
 
 ```bash
