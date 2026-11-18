@@ -228,3 +228,18 @@ runs/
 
 PCB_DATASET/
 *.rar
+
+
+# LaTeX build artifacts
+*.aux
+*.lof
+*.lot
+*.out
+*.toc
+*.nav
+*.snm
+*.vrb
+*.listing
+*.bbl
+*.blg
+*.synctex.gz
