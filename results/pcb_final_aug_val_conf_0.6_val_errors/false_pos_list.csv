@@ -1,0 +1,8 @@
+image,pred_class,conf,kind,x1,y1,x2,y2
+07_spurious_copper_05.jpg,Spurious Copper,0.775,lech,1447,883,1509,979
+11_missing_hole_03.jpg,Missing Hole,0.679,lech,704,948,796,1056
+11_missing_hole_04.jpg,Missing Hole,0.739,lech,397,729,495,823
+11_missing_hole_05.jpg,Missing Hole,0.691,lech,1995,1780,2156,1913
+11_missing_hole_08.jpg,Missing Hole,0.754,lech,1115,1263,1205,1366
+11_open_circuit_02.jpg,Open Circuit,0.635,nen,309,541,382,613
+11_spur_02.jpg,Spur,0.759,lech,786,337,839,433

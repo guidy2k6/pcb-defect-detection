@@ -1,0 +1,7 @@
+pred_class,false_pos,trung_gt_da_ghep,lech_iou_0.1_den_0.5,nen_iou_duoi_0.1,conf_trung_binh
+Missing Hole,4,0,4,0,0.716
+Mouse Bite,2,1,1,0,0.475
+Open Circuit,1,0,0,1,0.635
+Short,3,0,3,0,0.501
+Spur,3,2,1,0,0.538
+Spurious Copper,1,0,1,0,0.775
