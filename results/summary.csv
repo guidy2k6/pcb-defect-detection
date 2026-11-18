@@ -1,5 +1,7 @@
 run,split,eval_set,model,imgsz,P,R,mAP50,mAP50-95,ms_per_image
 pcb_best_640,Theo bo,val,yolov8s,640,0.9864,0.8945,0.9552,0.4963,11.71
+pcb_final_aug,Theo bo,test,yolov8s,1024,0.8502,0.9305,0.9730,0.5127,25.70
+pcb_final_aug,Theo bo,val,yolov8s,1024,0.9676,0.9646,0.9749,0.5300,24.08
 pcb_v8n_board,Theo bo,val,yolov8n,1024,0.9728,0.9165,0.9722,0.5195,13.33
 pcb_v8n_random,Ngau nhien,val,yolov8n,1024,0.9702,0.9333,0.9668,0.5293,13.6
 pcb_v8s_board,Theo bo,test,yolov8s,1024,0.8543,0.9336,0.9720,0.5162,25.71

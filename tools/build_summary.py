@@ -23,7 +23,7 @@ def run_info(run, results):
         cfg = yaml.safe_load(args.read_text(encoding="utf-8"))
     split = "Theo bo" if "board" in base or "data_board" in str(cfg.get("data", "")) else "Ngau nhien"
     m = re.search(r"v8([nsmlx])", base) or re.search(r"yolov8([nsmlx])", str(cfg.get("model", "")))
-    model = f"yolov8{m.group(1)}" if m else {"pcb_best_640": "yolov8s"}.get(base, "?")
+    model = f"yolov8{m.group(1)}" if m else {"pcb_best_640": "yolov8s", "pcb_final_aug": "yolov8s"}.get(base, "?")
     return base, split, model, cfg.get("imgsz", "")
 
 
