@@ -1,0 +1,18 @@
+# Augmentation cho mo hinh chiu nhieu (pcb_final_aug), dung voi:  python tools/train.py --aug configs/aug_robust.yaml ...
+# Chi gom cac phep giu box khit: lat, xoay boi 90 do, xoay goc nho, perspective nho, mo, doi sang.
+# Khong xoay goc lon vi box loi nho se no ra va nhan kem chinh xac (ke hoach muc 2.1).
+# mosaic, translate, scale giu mac dinh cua Ultralytics (khong ghi o day).
+
+ultralytics:        # truyen thang vao model.train(...)
+  flipud: 0.5       # lat doc (mac dinh Ultralytics: 0)
+  fliplr: 0.5       # lat ngang
+  degrees: 10.0     # xoay goc nho +-10 do (ke hoach cho phep 10-15; chon muc thap vi box nho)
+  perspective: 0.0005   # nghieng nhe; Ultralytics goi y 0-0.001
+  hsv_v: 0.4        # sang/toi +-40% (mac dinh), bo sung o duoi cho muc toi hon
+
+albumentations:     # can: pip install albumentations ; khong co thi train.py dung lai, khong am tham bo qua
+  - {name: RandomRotate90, p: 0.5}                     # xoay dung boi 90 do, box van khit
+  - {name: Blur, blur_limit: [3, 7], p: 0.15}
+  - {name: MedianBlur, blur_limit: [3, 5], p: 0.10}
+  - {name: MotionBlur, blur_limit: [3, 9], p: 0.15}
+  - {name: RandomBrightnessContrast, brightness_limit: [-0.5, 0.2], contrast_limit: 0.0, p: 0.30}

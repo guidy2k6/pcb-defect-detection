@@ -18,13 +18,15 @@
 
 - Sửa tên lớp (03/11/2026): thứ tự lớp trong file nhãn YOLO là abc (0 Missing Hole ... 5 Spurious Copper), còn `data_board.yaml` trước đó ghi thứ tự khác nên tên lớp trong weights và trong `dataset/cls` bị hoán vị. Số liệu tổng không đổi. Đã sửa tên bằng `tools/fix_class_names.py` và đánh giá lại. Kết quả theo lớp trước thời điểm này có tên lớp sai.
 - `tools/eval_pipeline.py` (đường XOR): tham số chọn trên val (close 27, min_area 250, grow 2,0; F1 ở IoU 0,5 là 0,618). Test chạy một lần: F1 0,638, phân loại trên box tìm đúng 0,917 (342/373).
+- Augmentation (cot `aug`): các run trước 13/11 dùng augmentation mặc định của Ultralytics 8.4.194 (cột ghi `mac dinh`). Run có augmentation chịu nhiễu dùng `--aug configs/aug_robust.yaml` (lật ngang/dọc, xoay bội 90°, xoay ±10°, perspective nhỏ, blur, giảm sáng). Albumentations có random riêng không bị `seed` của Ultralytics khống chế, nên run có `--aug` chỉ tái lập gần đúng chứ không từng bit.
 
 ## Bảng các lần chạy
 
-| Ngay gio | Run | Model | Data | imgsz | batch | epochs | patience | seed | ultralytics |
-|---|---|---|---|---|---|---|---|---|---|
-| 2026-10-31 09:13 | pcb_v8n_random | yolov8n.pt | C:/Users/Admin/Downloads/pcb_yolo/data.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 |
-| 2026-11-02 08:31 | pcb_v8s_board | yolov8s.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 |
-| 2026-11-02 12:33 | pcb_v8n_board | yolov8n.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 |
-| 2026-11-02 15:34 | pcb_cls_board | yolov8n-cls.pt | dataset/cls | 128 | 64 | 50 | 15 | 0 | 8.4.194 |
-| 2026-11-02 15:43 | pcb_best_640 | yolov8s.pt | configs/data_board.yaml | 640 | 8 | 100 | 30 | 0 | 8.4.194 |
+| Ngay gio | Run | Model | Data | imgsz | batch | epochs | patience | seed | ultralytics | aug |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-10-31 09:13 | pcb_v8n_random | yolov8n.pt | C:/Users/Admin/Downloads/pcb_yolo/data.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 | mac dinh |
+| 2026-11-02 08:31 | pcb_v8s_board | yolov8s.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 | mac dinh |
+| 2026-11-02 12:33 | pcb_v8n_board | yolov8n.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 | mac dinh |
+| 2026-11-02 15:34 | pcb_cls_board | yolov8n-cls.pt | dataset/cls | 128 | 64 | 50 | 15 | 0 | 8.4.194 | mac dinh |
+| 2026-11-02 15:43 | pcb_best_640 | yolov8s.pt | configs/data_board.yaml | 640 | 8 | 100 | 30 | 0 | 8.4.194 | mac dinh |
+| 2026-11-18 09:32 | pcb_final_aug | yolov8s.pt | configs/data_board.yaml | 1024 | 8 | 100 | 30 | 0 | 8.4.194 | configs/aug_robust.yaml |

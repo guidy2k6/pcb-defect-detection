@@ -1,0 +1,25 @@
+\begin{table}[H]
+\centering
+\small
+\caption{Độ bền theo điều kiện nhiễu, tập val (\texttt{results/robustness.csv}). Độ khít nhãn là tỉ lệ diện tích box gốc so với box sau biến đổi; dưới 1 nghĩa là nhãn bị nở ra nên mAP50 bị chặn trên.}\label{tab:chiunhieu_val}
+\begin{tabular}{l|c|cc|cc}
+\toprule
+\textbf{Điều kiện} & \textbf{Độ khít nhãn} & \multicolumn{2}{c}{\texttt{pcb\_final\_aug}} & \multicolumn{2}{c}{\texttt{pcb\_v8s\_board}} \\
+ &  & mAP50 & $R$ & mAP50 & $R$ \\ \midrule
+Gốc & 1.00 & 0.9749 & 0.9646 & 0.9782 & 0.9582 \\
+Xoay 15° & 0.65 & 0.9841 & 0.9683 & 0.8229 & 0.7884 \\
+Xoay 45° & 0.48 & 0.6903 & 0.7819 & 0.5848 & 0.6614 \\
+Xoay 90° & 1.00 & 0.9791 & 0.9735 & 0.9645 & 0.9311 \\
+Xoay 180° & 1.00 & 0.9878 & 0.9741 & 0.9726 & 0.9536 \\
+Nghiêng 5\% & 0.99 & 0.9731 & 0.9605 & 0.9756 & 0.9620 \\
+Nghiêng 10\% & 0.98 & 0.9784 & 0.9624 & 0.9735 & 0.9505 \\
+Nghiêng 15\% & 0.98 & 0.9847 & 0.9684 & 0.9489 & 0.8822 \\
+Blur σ=1 & 1.00 & 0.9761 & 0.9673 & 0.9810 & 0.9688 \\
+Blur σ=2 & 1.00 & 0.9799 & 0.9691 & 0.9769 & 0.9607 \\
+Blur σ=3 & 1.00 & 0.9781 & 0.9751 & 0.9674 & 0.9396 \\
+Blur σ=5 & 1.00 & 0.9678 & 0.9611 & 0.8372 & 0.7934 \\
+Motion blur 15 px & 1.00 & 0.9772 & 0.9662 & 0.9480 & 0.9146 \\
+Tối 50\% & 1.00 & 0.9744 & 0.9605 & 0.9607 & 0.9477 \\
+\bottomrule
+\end{tabular}
+\end{table}

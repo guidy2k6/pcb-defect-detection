@@ -562,9 +562,14 @@ class PCBInspector:
 
     def _xor_map(self, r) -> np.ndarray:
         base = r["aligned"].copy()
-        mask = cv2.bitwise_and(r["xor_raw"], r["valid"]) > 0
-        base[mask] = (0.35 * base[mask] + 0.65 * np.array([0, 0, 255])).astype(np.uint8)
-        return render(base, [], self.s.max_display_side)
+        mask = cv2.bitwise_and(r["xor_raw"], r["valid"])
+        mask = cv2.medianBlur(mask, 5)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
+        mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (17, 17))) > 0
+        base = (base * 0.5).astype(np.uint8)
+        base[mask] = (0.15 * base[mask] + 0.85 * np.array([0, 0, 255])).astype(np.uint8)
+        boxes = [(b, "", (255, 230, 0)) for b in r["new"]]
+        return render(base, boxes, self.s.max_display_side)
 
     # ---- 3. cross-check -------------------------------------------------------------------------------------------
     def cross_check(self, defect_path, template_path, conf: float | None = None, match_iou: float = 0.1) -> Analysis:
