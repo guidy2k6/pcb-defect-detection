@@ -1,6 +1,7 @@
 
 import argparse
 import csv
+from collections import OrderedDict
 from collections.abc import Iterable
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -10,6 +11,12 @@ import numpy as np
 
 
 IMAGE_EXTENSIONS = {".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff"}
+_FEATURE_CACHE_SIZE = 10
+_ALIGNMENT_SCALE = 0.5
+_BASELINE_FEATURE_CACHE: OrderedDict[
+    tuple[str, int, int],
+    tuple[tuple[cv2.KeyPoint, ...], np.ndarray | None],
+] = OrderedDict()
 
 
 def _board_id(image: str | Path) -> str:
@@ -104,10 +111,48 @@ def binarize_pair(
     return binary_base, binary_def
 
 
+def _resize_for_alignment(gray_image: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Thu nhỏ ảnh xám để tìm đặc trưng và trả ma trận đổi từ tọa độ gốc sang ảnh nhỏ."""
+    height, width = gray_image.shape
+    small_width = max(1, round(width * _ALIGNMENT_SCALE))
+    small_height = max(1, round(height * _ALIGNMENT_SCALE))
+    resized = cv2.resize(
+        gray_image,
+        (small_width, small_height),
+        interpolation=cv2.INTER_AREA,
+    )
+    scale_transform = np.diag(
+        (small_width / width, small_height / height, 1.0)
+    )
+    return resized, scale_transform
+
+
+def _baseline_sift_features(
+    baseline_path: Path,
+    gray_image: np.ndarray,
+    sift: cv2.SIFT,
+) -> tuple[tuple[cv2.KeyPoint, ...], np.ndarray | None]:
+    """Lấy đặc trưng SIFT của ảnh baseline từ bộ nhớ đệm tối đa mười ảnh."""
+    stat = baseline_path.stat()
+    cache_key = (str(baseline_path.resolve()), stat.st_mtime_ns, stat.st_size)
+    cached = _BASELINE_FEATURE_CACHE.get(cache_key)
+    if cached is not None:
+        _BASELINE_FEATURE_CACHE.move_to_end(cache_key)
+        return cached
+
+    keypoints, descriptors = sift.detectAndCompute(gray_image, None)
+    features = (tuple(keypoints), descriptors)
+    _BASELINE_FEATURE_CACHE[cache_key] = features
+    _BASELINE_FEATURE_CACHE.move_to_end(cache_key)
+    while len(_BASELINE_FEATURE_CACHE) > _FEATURE_CACHE_SIZE:
+        _BASELINE_FEATURE_CACHE.popitem(last=False)
+    return features
+
+
 def post_process_and_extract_bboxes(
     diff_bin: np.ndarray,
 ) -> tuple[np.ndarray, list[tuple[int, int, int, int, int]]]:
-    """Khử nhiễu mask nhị phân, bỏ vùng nhỏ và trả về bbox (x, y, w, h, area)."""
+    """Lọc nhiễu mask XOR, loại vùng nhỏ và trả mask sạch cùng các hộp (x, y, w, h, diện tích)."""
     if diff_bin.ndim != 2 or diff_bin.dtype != np.uint8:
         raise ValueError("diff_bin phải là ảnh nhị phân một kênh kiểu uint8")
     if min(diff_bin.shape) < 3:
@@ -144,7 +189,7 @@ def process_pair(
     list[tuple[int, int, int, int, int]],
     np.ndarray,
 ]:
-    """Căn chỉnh hai ảnh, tạo mask XOR và trả các ảnh trung gian."""
+    """Căn chỉnh ảnh lỗi theo ảnh baseline, tạo mask XOR và trả ảnh trung gian, hộp lỗi cùng homography."""
     # 1. Đọc ảnh màu và chuyển sang ảnh xám
     img_base_color = cv2.imread(str(baseline_path), cv2.IMREAD_COLOR)
     img_def_color = cv2.imread(str(defect_path), cv2.IMREAD_COLOR)
@@ -155,14 +200,19 @@ def process_pair(
     img_base_gray = to_gray(img_base_color)
     img_def_gray = to_gray(img_def_color)
 
-    # 2. Phát hiện đặc trưng SIFT
+    # 2. Tìm đặc trưng trên ảnh thu nhỏ; chỉ tái sử dụng đặc trưng baseline.
     sift = cv2.SIFT_create()
-    kp_base, des_base = sift.detectAndCompute(img_base_gray, None)
-    kp_def, des_def = sift.detectAndCompute(img_def_gray, None)
-    if des_base is None or des_def is None:
+    base_small, base_scale = _resize_for_alignment(img_base_gray)
+    defect_small, defect_scale = _resize_for_alignment(img_def_gray)
+    kp_base, des_base = _baseline_sift_features(
+        baseline_path, base_small, sift
+    )
+    kp_def, des_def = sift.detectAndCompute(defect_small, None)
+
+    # KNN k=2 không thể tạo đủ điểm khớp nếu một trong hai ảnh có dưới 10 descriptor.
+    if des_base is None or des_def is None or min(len(des_base), len(des_def)) < 10:
         raise ValueError(
-            f"Không tìm thấy đặc trưng SIFT trong "
-            f"{baseline_path.name} hoặc {defect_path.name}"
+            f"Không đủ điểm khớp giữa {baseline_path.name} và {defect_path.name}"
         )
 
     # 3. Khớp điểm đặc trưng & lọc tỷ lệ Lowe
@@ -184,7 +234,7 @@ def process_pair(
             f"Không đủ điểm khớp giữa {baseline_path.name} và {defect_path.name}"
         )
 
-    # 4. Tìm Homography với RANSAC
+    # 4. Tìm Homography với RANSAC trong hệ tọa độ ảnh thu nhỏ.
     src_pts = np.float32(
         [kp_def[m.queryIdx].pt for m in good_matches]
     ).reshape(-1, 1, 2)
@@ -198,6 +248,7 @@ def process_pair(
             f"Không tìm được homography giữa {baseline_path.name} "
             f"và {defect_path.name}"
         )
+    H = np.linalg.inv(base_scale) @ H @ defect_scale
 
     # 5. Căn chỉnh ảnh (Warp Perspective)
     h, w = img_base_gray.shape
@@ -243,7 +294,7 @@ def align_and_xor(
     defect_path: Path,
     lowe_ratio: float = 0.75,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Giữ giao diện cũ; căn chỉnh ảnh bằng SIFT và tính XOR."""
+    """Duy trì giao diện cũ, trả ảnh baseline, ảnh lỗi đã căn chỉnh, mask XOR và ảnh vẽ hộp."""
     images, _, _ = process_pair(baseline_path, defect_path, lowe_ratio)
     return (
         images["baseline_gray"],
@@ -254,6 +305,7 @@ def align_and_xor(
 
 
 def _image_files(directory: Path) -> list[Path]:
+    """Liệt kê có sắp xếp các tệp ảnh được hỗ trợ trong thư mục."""
     if not directory.is_dir():
         raise NotADirectoryError(f"Không tìm thấy thư mục ảnh: {directory}")
     return sorted(
@@ -264,6 +316,7 @@ def _image_files(directory: Path) -> list[Path]:
 
 
 def _annotation_index(annotation_dir: Path) -> dict[str, list[Path]]:
+    """Lập chỉ mục các tệp XML theo tên tệp không phân biệt chữ hoa, chữ thường."""
     if not annotation_dir.is_dir():
         raise NotADirectoryError(f"Không tìm thấy thư mục annotation: {annotation_dir}")
     annotations: dict[str, list[Path]] = {}
@@ -276,7 +329,7 @@ def _label_box_count(
     defect_path: Path,
     annotations: dict[str, list[Path]],
 ) -> tuple[Path, int]:
-
+    """Tìm XML của ảnh lỗi, kiểm tra tên ảnh và đếm các đối tượng có hộp giới hạn."""
     matches = annotations.get(defect_path.stem.casefold(), [])
 
     if not matches:
@@ -323,7 +376,7 @@ def save_overlay_pairs(
     limit: int = 5,
     annotation_dir: Path | None = None,
 ) -> list[Path]:
-    """Chạy tối đa limit cặp, lưu các bước xử lý và đối chiếu số box nhãn."""
+    """Xử lý tối đa limit cặp ảnh, lưu ảnh trung gian và CSV đối chiếu hộp phát hiện với nhãn."""
     if limit < 1:
         raise ValueError("Số cặp ảnh cần chạy phải lớn hơn 0")
 
@@ -528,6 +581,7 @@ def save_overlay_pairs(
 
 
 def main() -> None:
+    """Đọc tham số dòng lệnh và chạy quy trình lưu kết quả XOR."""
     parser = argparse.ArgumentParser(
         description="Căn chỉnh ảnh PCB bằng SIFT, lưu các bước XOR và so số box."
     )
