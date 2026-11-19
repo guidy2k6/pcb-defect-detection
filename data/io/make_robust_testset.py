@@ -1,4 +1,4 @@
-"""Generate rotated, tilted, and blurred variants of the held-out YOLO test set.
+"""Generate a YOLO split with random rotation and blur, retaining some clean images.
 
     python data/io/make_robust_testset.py --data configs/data_board.yaml
 """
@@ -50,117 +50,106 @@ def _rotation_matrix(width, height, angle):
     return np.vstack((affine, (0, 0, 1))).astype(np.float32), output_width, output_height
 
 
-def _tilt_matrix(width, height, fraction, far_edge):
-    right, bottom = width - 1, height - 1
-    if far_edge == "top":
-        inset = right * fraction
-        destination = [[inset, 0], [right - inset, 0], [right, bottom], [0, bottom]]
-    else:
-        inset = right * fraction
-        destination = [[0, 0], [right, 0], [right - inset, bottom], [inset, bottom]]
-    source = [[0, 0], [right, 0], [right, bottom], [0, bottom]]
-    return cv2.getPerspectiveTransform(np.float32(source), np.float32(destination))
-
-
 def _read_image(path):
     image = cv2.imdecode(np.fromfile(str(path), dtype=np.uint8), cv2.IMREAD_COLOR)
     if image is None:
-        raise ValueError(f"Could not read test image: {path}")
+        raise ValueError(f"Could not read image: {path}")
     return image
 
 
-def _write_variant(output_root, image_path, variant_name, image, boxes):
-    image_dir = output_root / "images" / variant_name
-    label_dir = output_root / "labels" / variant_name
+def _write_image_and_label(output_root, split, image_path, image, boxes):
+    image_dir = output_root / "images" / split
+    label_dir = output_root / "labels" / split
     image_dir.mkdir(parents=True, exist_ok=True)
     label_dir.mkdir(parents=True, exist_ok=True)
 
-    output_image = image_dir / f"{image_path.stem}__{variant_name}{image_path.suffix.lower()}"
-    output_label = label_dir / f"{image_path.stem}__{variant_name}.txt"
+    output_image = image_dir / f"{image_path.stem}{image_path.suffix.lower()}"
+    output_label = label_dir / f"{image_path.stem}.txt"
     if output_image.exists() or output_label.exists():
-        raise FileExistsError(f"Robust test output already exists: {output_image}")
+        raise FileExistsError(f"Output already exists: {output_image}")
     success, encoded = cv2.imencode(output_image.suffix, image)
     if not success:
         raise ValueError(f"Could not encode output image: {output_image}")
     output_image.write_bytes(encoded.tobytes())
     output_label.write_text(
-        "".join(f"{class_id} {xc:.6f} {yc:.6f} {width:.6f} {height:.6f}\n"
-                for class_id, xc, yc, width, height in boxes),
+        "".join(
+            f"{class_id} {xc:.6f} {yc:.6f} {width:.6f} {height:.6f}\n"
+            for class_id, xc, yc, width, height in boxes
+        ),
         encoding="utf-8",
     )
 
 
-def _angle_name(angle):
-    return f"rotate_{'p' if angle > 0 else 'm'}{abs(angle):g}".replace(".", "p")
-
-
-def _generate(args):
-    _, image_paths = load_split(args.data, "test")
-    if args.tilt_fraction <= 0 or args.tilt_fraction >= 0.5:
-        raise ValueError("--tilt-fraction must be greater than 0 and less than 0.5")
-    if not args.rotate_angles or any(angle == 0 for angle in args.rotate_angles):
-        raise ValueError("--rotate-angles must contain non-zero angles")
-    if len(set(args.rotate_angles)) != len(args.rotate_angles):
-        raise ValueError("--rotate-angles must not contain duplicates")
-    if not args.blur_kernels or any(kernel <= 0 or kernel % 2 == 0 for kernel in args.blur_kernels):
-        raise ValueError("--blur-kernels must contain positive odd integers")
-    if len(set(args.blur_kernels)) != len(args.blur_kernels):
-        raise ValueError("--blur-kernels must not contain duplicates")
-
+def _generate_split(args, split, rng):
+    _, image_paths = load_split(args.data, split)
     output_root = args.out.resolve()
-    generated = 0
-    for image_path in image_paths:
+    clean_total = min(
+        len(image_paths),
+        max(1, round(len(image_paths) * args.clean_ratio)) if args.clean_ratio > 0 else 0,
+    )
+    clean_indices = set(rng.choice(len(image_paths), size=clean_total, replace=False))
+    clean_count = 0
+    for index, image_path in enumerate(image_paths):
         image = _read_image(image_path)
         height, width = image.shape[:2]
         annotation_path = label_path(image_path)
         if not annotation_path.is_file():
-            raise FileNotFoundError(f"Missing test labels: {annotation_path}")
+            raise FileNotFoundError(f"Missing labels: {annotation_path}")
         boxes = read_labels(image_path)
-        variants = []
 
-        for angle in args.rotate_angles:
+        if index in clean_indices:
+            output_image, output_boxes = image, boxes
+            clean_count += 1
+        else:
+            angle = float(rng.uniform(args.angle_min, args.angle_max))
+            angle *= -1 if rng.random() < 0.5 else 1
             matrix, output_width, output_height = _rotation_matrix(width, height, angle)
-            warped = cv2.warpPerspective(
+            output_image = cv2.warpPerspective(
                 image, matrix, (output_width, output_height), borderMode=cv2.BORDER_CONSTANT
             )
-            variants.append((
-                _angle_name(angle),
-                warped,
-                _transform_boxes(boxes, matrix, width, height, output_width, output_height),
-            ))
-
-        for far_edge in ("top", "bottom"):
-            matrix = _tilt_matrix(width, height, args.tilt_fraction, far_edge)
-            warped = cv2.warpPerspective(
-                image, matrix, (width, height), borderMode=cv2.BORDER_CONSTANT
+            output_boxes = _transform_boxes(
+                boxes, matrix, width, height, output_width, output_height
             )
-            variants.append((
-                f"tilt_{far_edge}",
-                warped,
-                _transform_boxes(boxes, matrix, width, height, width, height),
-            ))
+            sigma = float(rng.uniform(args.blur_sigma_min, args.blur_sigma_max))
+            output_image = cv2.GaussianBlur(
+                output_image, (0, 0), sigmaX=sigma, sigmaY=sigma
+            )
 
-        for kernel in args.blur_kernels:
-            variants.append((
-                f"blur_k{kernel}",
-                cv2.GaussianBlur(image, (kernel, kernel), 0),
-                boxes,
-            ))
+        _write_image_and_label(output_root, split, image_path, output_image, output_boxes)
 
-        for name, transformed_image, transformed_boxes in variants:
-            _write_variant(output_root, image_path, name, transformed_image, transformed_boxes)
-            generated += 1
+    print(
+        f"Generated {len(image_paths)} images ({clean_count} unchanged) "
+        f"from {split}: {output_root}"
+    )
 
-    print(f"Generated {generated} robust test images from {len(image_paths)} test images: {output_root}")
+
+def _generate(args):
+    if not 0 <= args.clean_ratio <= 1:
+        raise ValueError("--clean-ratio must be between 0 and 1")
+    if args.angle_min <= 0 or args.angle_max < args.angle_min or args.angle_max >= 90:
+        raise ValueError("--angle-min and --angle-max must satisfy 0 < min <= max < 90")
+    if args.blur_sigma_min <= 0 or args.blur_sigma_max < args.blur_sigma_min:
+        raise ValueError("--blur-sigma-min and --blur-sigma-max must satisfy 0 < min <= max")
+
+    splits = ("train", "val", "test") if args.split == "all" else (args.split,)
+    rng = np.random.default_rng(args.seed)
+    for split in splits:
+        _generate_split(args, split, rng)
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--data", type=Path, default=REPO / "configs" / "data_board.yaml")
-    parser.add_argument("--out", type=Path, default=REPO / "dataset" / "pcb_robust_testset")
-    parser.add_argument("--rotate-angles", type=float, nargs="+", default=[-10, 10])
-    parser.add_argument("--tilt-fraction", type=float, default=0.08)
-    parser.add_argument("--blur-kernels", type=int, nargs="+", default=[5, 9])
+    parser.add_argument("--out", type=Path, default=REPO / "dataset" / "pcb_robust")
+    parser.add_argument("--split", choices=("all", "train", "val", "test"), default="all")
+    parser.add_argument("--clean-ratio", type=float, default=0.2)
+    parser.add_argument("--angle-min", type=float, default=10)
+    parser.add_argument("--angle-max", type=float, default=20)
+    parser.add_argument("--blur-sigma-min", type=float, default=1)
+    parser.add_argument("--blur-sigma-max", type=float, default=4)
+    parser.add_argument("--seed", type=int, default=42)
     _generate(parser.parse_args())
 
 
