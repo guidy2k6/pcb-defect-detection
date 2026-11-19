@@ -114,6 +114,31 @@ python tools/eval.py \
 
 Per-class metrics and plots are written under `results/pcb_v8s_board_val/`. The held-out test set should be evaluated only for final reporting. This script refuses to overwrite an existing `results/test_metrics.csv`; pass `--split test --force` only when intentionally rerunning the test evaluation.
 
+## Robustness evaluation
+
+The robustness results in `results/robustness.csv` are generated from `tools/perturb.py` and `tools/eval_robustness.py`. These scripts read the original validation or test split, generate fixed perturbation variants (for example rotation, tilt, blur, motion blur, and darkness), transform the YOLO boxes accordingly, and evaluate the trained model on each variant. The scripts are deterministic and do not use the randomly generated dataset from `make_robust_testset.py`.
+
+Use validation for model selection:
+
+```bash
+python tools/eval_robustness.py \
+	--data configs/data_board.yaml \
+	--split val \
+	--model pcb_v8s_board=runs/detect/pcb_v8s_board/weights/best.pt \
+	--model pcb_final_aug=runs/detect/pcb_final_aug/weights/best.pt
+```
+
+After selecting and fixing the model, run test evaluation once for the final robustness numbers:
+
+```bash
+python tools/eval_robustness.py \
+	--data configs/data_board.yaml \
+	--split test \
+	--model pcb_final_aug=runs/detect/pcb_final_aug/weights/best.pt
+```
+
+The result for each model, split, and perturbation level is appended or replaced in `results/robustness.csv`. Use `tools/plot_robustness.py --split val` or `--split test` to generate the corresponding figure and LaTeX table. For arbitrary-angle rotation and tilt, bounding-box envelopes can become larger than the original boxes; `label_tightness` records this effect and should be considered when interpreting mAP50.
+
 ## Store weights on Hugging Face
 
 Keep trained `.pt` checkpoints in a Hugging Face model repository rather than GitHub. Authenticate first; `hf upload` creates the model repository if it does not exist yet:
