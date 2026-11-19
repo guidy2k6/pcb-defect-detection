@@ -15,7 +15,7 @@ sys.path.insert(0, str(REPO / "tools"))
 from yolo_utils import label_path, load_split, read_labels  # noqa: E402
 
 
-def _transform_boxes(boxes, matrix, width, height):
+def _transform_boxes(boxes, matrix, width, height, output_width, output_height):
     transformed = []
     for class_id, xc, yc, box_width, box_height in boxes:
         x1, x2 = (xc - box_width / 2) * width, (xc + box_width / 2) * width
@@ -24,33 +24,41 @@ def _transform_boxes(boxes, matrix, width, height):
             [[[x1, y1], [x2, y1], [x2, y2], [x1, y2]]],
             dtype=np.float32,
         )
-        points = cv2.perspectiveTransform(corners, matrix)[0]
-        x_min = float(np.clip(points[:, 0].min(), 0, width))
-        x_max = float(np.clip(points[:, 0].max(), 0, width))
-        y_min = float(np.clip(points[:, 1].min(), 0, height))
-        y_max = float(np.clip(points[:, 1].max(), 0, height))
+        points = cv2.perspectiveTransform(corners - 0.5, matrix)[0] + 0.5
+        x_min = float(np.clip(points[:, 0].min(), 0, output_width))
+        x_max = float(np.clip(points[:, 0].max(), 0, output_width))
+        y_min = float(np.clip(points[:, 1].min(), 0, output_height))
+        y_max = float(np.clip(points[:, 1].max(), 0, output_height))
         if x_max > x_min and y_max > y_min:
             transformed.append((
                 class_id,
-                (x_min + x_max) / (2 * width),
-                (y_min + y_max) / (2 * height),
-                (x_max - x_min) / width,
-                (y_max - y_min) / height,
+                (x_min + x_max) / (2 * output_width),
+                (y_min + y_max) / (2 * output_height),
+                (x_max - x_min) / output_width,
+                (y_max - y_min) / output_height,
             ))
     return transformed
 
 
 def _rotation_matrix(width, height, angle):
-    affine = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1.0)
-    return np.vstack((affine, (0, 0, 1))).astype(np.float32)
+    affine = cv2.getRotationMatrix2D(((width - 1) / 2, (height - 1) / 2), angle, 1.0)
+    cosine, sine = abs(affine[0, 0]), abs(affine[0, 1])
+    output_width = int(np.ceil((width - 1) * cosine + (height - 1) * sine - 1e-9)) + 1
+    output_height = int(np.ceil((height - 1) * cosine + (width - 1) * sine - 1e-9)) + 1
+    affine[0, 2] += (output_width - 1) / 2 - (width - 1) / 2
+    affine[1, 2] += (output_height - 1) / 2 - (height - 1) / 2
+    return np.vstack((affine, (0, 0, 1))).astype(np.float32), output_width, output_height
 
 
 def _tilt_matrix(width, height, fraction, far_edge):
+    right, bottom = width - 1, height - 1
     if far_edge == "top":
-        destination = [[width * fraction, 0], [width * (1 - fraction), 0], [width, height], [0, height]]
+        inset = right * fraction
+        destination = [[inset, 0], [right - inset, 0], [right, bottom], [0, bottom]]
     else:
-        destination = [[0, 0], [width, 0], [width * (1 - fraction), height], [width * fraction, height]]
-    source = [[0, 0], [width, 0], [width, height], [0, height]]
+        inset = right * fraction
+        destination = [[0, 0], [right, 0], [right - inset, bottom], [inset, bottom]]
+    source = [[0, 0], [right, 0], [right, bottom], [0, bottom]]
     return cv2.getPerspectiveTransform(np.float32(source), np.float32(destination))
 
 
@@ -111,21 +119,25 @@ def _generate(args):
         variants = []
 
         for angle in args.rotate_angles:
-            matrix = _rotation_matrix(width, height, angle)
+            matrix, output_width, output_height = _rotation_matrix(width, height, angle)
             warped = cv2.warpPerspective(
-                image, matrix, (width, height), borderMode=cv2.BORDER_REFLECT_101
+                image, matrix, (output_width, output_height), borderMode=cv2.BORDER_CONSTANT
             )
-            variants.append((_angle_name(angle), warped, _transform_boxes(boxes, matrix, width, height)))
+            variants.append((
+                _angle_name(angle),
+                warped,
+                _transform_boxes(boxes, matrix, width, height, output_width, output_height),
+            ))
 
         for far_edge in ("top", "bottom"):
             matrix = _tilt_matrix(width, height, args.tilt_fraction, far_edge)
             warped = cv2.warpPerspective(
-                image, matrix, (width, height), borderMode=cv2.BORDER_REFLECT_101
+                image, matrix, (width, height), borderMode=cv2.BORDER_CONSTANT
             )
             variants.append((
                 f"tilt_{far_edge}",
                 warped,
-                _transform_boxes(boxes, matrix, width, height),
+                _transform_boxes(boxes, matrix, width, height, width, height),
             ))
 
         for kernel in args.blur_kernels:

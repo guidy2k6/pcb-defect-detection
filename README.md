@@ -79,7 +79,7 @@ python data/io/make_robust_testset.py \
 	--out dataset/pcb_robust_testset
 ```
 
-The output is organized as `images/<variant>/` and `labels/<variant>/`. Rotation angles and blur kernels can be customized with `--rotate-angles` and `--blur-kernels`.
+The output is organized as `images/<variant>/` and `labels/<variant>/`. Rotated images expand their canvas to keep the full image; areas outside tilted images are black instead of reflected image content. Rotation angles and blur kernels can be customized with `--rotate-angles` and `--blur-kernels`.
 
 Train YOLOv8s on the board-level split. Ultralytics downloads `yolov8s.pt` if it is not already available:
 
